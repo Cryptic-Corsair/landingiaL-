@@ -18,6 +18,7 @@ import {
 export interface ResonanceCanvasProps {
   morphTarget?: number;
   scrollProgressRef?: MutableRefObject<number>;
+  exciteValueRef?: MutableRefObject<number>;
   staticRenderCallbackRef?: MutableRefObject<(() => void) | null>;
   exciteActive?: boolean;
   shockwaveTrigger?: number;
@@ -58,6 +59,7 @@ function createFormationGeometry(count: number): THREE.BufferGeometry {
 export function ResonanceCanvas({
   morphTarget,
   scrollProgressRef,
+  exciteValueRef,
   staticRenderCallbackRef,
   exciteActive = false,
   shockwaveTrigger = 0,
@@ -292,7 +294,11 @@ export function ResonanceCanvas({
       if (disposed || contextLost) return;
       const targetMorph = resolveTargetMorph();
       uniforms.uMorph.value = targetMorph;
-      uniforms.uExcite.value = exciteActiveRef.current ? 1.0 : 0.0;
+      uniforms.uExcite.value = exciteValueRef
+        ? exciteValueRef.current
+        : exciteActiveRef.current
+          ? 1.0
+          : 0.0;
       uniforms.uShockwave.value = 0;
       uniforms.uShockwaveStrength.value = 0;
       pendingShockwaveRef.current = false;
@@ -405,14 +411,20 @@ export function ResonanceCanvas({
       points.rotation.y = dampValue(points.rotation.y, targetRotY, 4.5, dt);
       points.rotation.x = dampValue(points.rotation.x, targetRotX, 4.5, dt);
 
-      // Excite hold pull & release shockwave
-      const exciteGoal = exciteActiveRef.current ? 1 : 0;
-      currentExcite = dampValue(
-        currentExcite,
-        exciteGoal,
-        exciteGoal > 0.5 ? 6.5 : 8.5,
-        dt,
-      );
+      // Excite hold pull (smooth 1.1s ramp via exciteValueRef or damped boolean) & release shockwave
+      const exciteGoal = exciteValueRef
+        ? exciteValueRef.current
+        : exciteActiveRef.current
+          ? 1
+          : 0;
+      currentExcite = exciteValueRef
+        ? dampValue(currentExcite, exciteGoal, 14, dt)
+        : dampValue(
+            currentExcite,
+            exciteGoal,
+            exciteGoal > 0.5 ? 6.5 : 8.5,
+            dt,
+          );
       uniforms.uExcite.value = currentExcite;
 
       if (pendingShockwaveRef.current) {
@@ -495,7 +507,7 @@ export function ResonanceCanvas({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [scrollProgressRef, staticRenderCallbackRef]);
+  }, [scrollProgressRef, exciteValueRef, staticRenderCallbackRef]);
 
   return (
     <div

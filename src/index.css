@@ -47,3 +47,10 @@ html.lenis body {
 .lenis.lenis-stopped {
   overflow: clip;
 }
+
+@media (pointer: fine) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
+}

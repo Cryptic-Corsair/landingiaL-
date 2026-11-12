@@ -7,18 +7,23 @@ import {
 } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CustomCursor } from './components/CustomCursor';
 import { EntryVeil } from './components/EntryVeil';
 import { FilmGrainOverlay } from './components/FilmGrainOverlay';
+import { HoldExciteRing } from './components/HoldExciteRing';
+import { PortalCurtain } from './components/PortalCurtain';
 import { ResonanceCanvas } from './components/ResonanceCanvas';
 import { TopBar } from './components/TopBar';
 import { createSmoothScroll, type SmoothScrollController } from './lib/scroll';
 import { computeMagneticOffset } from './lib/scrollCurves';
+import { soundEngine } from './lib/sound';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
   const pageRef = useRef<HTMLDivElement | null>(null);
   const scrollProgressRef = useRef<number>(0);
+  const exciteValueRef = useRef<number>(0);
   const staticRenderCallbackRef = useRef<(() => void) | null>(null);
   const scrollControllerRef = useRef<SmoothScrollController | null>(null);
 
@@ -27,11 +32,14 @@ export default function App() {
   const beat2LineRef = useRef<HTMLHeadingElement | null>(null);
   const beat3Line1Ref = useRef<HTMLSpanElement | null>(null);
   const beat3Line2Ref = useRef<HTMLSpanElement | null>(null);
-  const beat4RingRef = useRef<HTMLDivElement | null>(null);
+  const beat4WrapRef = useRef<HTMLDivElement | null>(null);
   const beat5ContentRef = useRef<HTMLDivElement | null>(null);
   const enterCtaRef = useRef<HTMLAnchorElement | null>(null);
 
-  const [portalStatus, setPortalStatus] = useState<'idle' | 'entering'>('idle');
+  const [exciteActive, setExciteActive] = useState<boolean>(false);
+  const [shockwaveTrigger, setShockwaveTrigger] = useState<number>(0);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
+  const [portalOpen, setPortalOpen] = useState<boolean>(false);
   const [magneticOffset, setMagneticOffset] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
@@ -128,9 +136,9 @@ export default function App() {
       }
 
       // Beat 04: Quiet tension ring subtle entrance scale
-      if (beat4RingRef.current) {
+      if (beat4WrapRef.current) {
         gsap.fromTo(
-          beat4RingRef.current,
+          beat4WrapRef.current,
           { scale: 0.92, opacity: 0.35 },
           {
             scale: 1,
@@ -166,22 +174,62 @@ export default function App() {
       }
     }, pageRef);
 
+    // Ensure ScrollTrigger recalculates cleanly on resize
+    let refreshRaf = 0;
+    const handleResize = () => {
+      cancelAnimationFrame(refreshRaf);
+      refreshRaf = requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
+    };
+    window.addEventListener('resize', handleResize);
     ScrollTrigger.refresh();
 
     return () => {
+      cancelAnimationFrame(refreshRaf);
+      window.removeEventListener('resize', handleResize);
       ctx.revert();
       controller.destroy();
       scrollControllerRef.current = null;
+      soundEngine.dispose();
     };
   }, []);
 
-  const handleScrollToEnter = useCallback(() => {
-    const target = document.getElementById('beat-05');
-    if (target && scrollControllerRef.current) {
-      scrollControllerRef.current.scrollToTarget(target);
-    } else if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
+  // Lock Lenis scroll when portal curtain is open
+  useEffect(() => {
+    const lenis = scrollControllerRef.current?.lenis;
+    if (!lenis) return;
+    if (portalOpen) {
+      lenis.stop();
+    } else {
+      lenis.start();
     }
+  }, [portalOpen]);
+
+  const handleToggleSound = useCallback(async () => {
+    const next = await soundEngine.toggle();
+    setSoundEnabled(next);
+  }, []);
+
+  const handleOpenPortal = useCallback(() => {
+    setPortalOpen(true);
+  }, []);
+
+  const handleReplayExperience = useCallback(() => {
+    setPortalOpen(false);
+    scrollProgressRef.current = 0;
+    if (scrollControllerRef.current?.lenis) {
+      scrollControllerRef.current.lenis.start();
+      scrollControllerRef.current.lenis.scrollTo(0, { immediate: true });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    ScrollTrigger.refresh();
+    staticRenderCallbackRef.current?.();
+  }, []);
+
+  const handleShockwaveFire = useCallback(() => {
+    setShockwaveTrigger((prev) => prev + 1);
   }, []);
 
   const handleMagneticMove = useCallback(
@@ -204,20 +252,30 @@ export default function App() {
       data-testid="scroll-stage"
       className="relative w-full min-h-screen bg-[#110E17] text-[#FFF6EA]"
     >
+      {/* Desktop hairline crosshair cursor */}
+      <CustomCursor />
+
       {/* Non-blocking 00 -> 100 Entry Veil */}
       <EntryVeil />
 
       {/* Fixed full-viewport 3D WebGL Resonance Sculpture */}
       <ResonanceCanvas
         scrollProgressRef={scrollProgressRef}
+        exciteValueRef={exciteValueRef}
         staticRenderCallbackRef={staticRenderCallbackRef}
+        exciteActive={exciteActive}
+        shockwaveTrigger={shockwaveTrigger}
       />
 
       {/* Subtle 0.035 opacity film grain */}
       <FilmGrainOverlay />
 
       {/* Ultra-Minimal Fixed Top Bar */}
-      <TopBar onEnterClick={handleScrollToEnter} />
+      <TopBar
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onEnterClick={handleOpenPortal}
+      />
 
       {/* 5 Silent Cinematic Scroll Beats (~480vh total) */}
       <main className="relative z-10 w-full overflow-x-clip">
@@ -304,16 +362,12 @@ export default function App() {
           aria-label="Beat 04 Quiet Tension"
           className="relative w-full h-[80vh] flex items-center justify-center px-6"
         >
-          <div
-            ref={beat4RingRef}
-            className="flex flex-col items-center justify-center w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-[#110E17]/75 pointer-events-auto transition-colors duration-300 hover:border-[#C4BEFF]/55"
-            style={{
-              border: '1px solid rgba(255, 246, 234, 0.24)',
-            }}
-          >
-            <span className="font-mono text-[11px] tracking-[0.2em] text-[#FFF6EA] whitespace-nowrap">
-              Hold to excite
-            </span>
+          <div ref={beat4WrapRef}>
+            <HoldExciteRing
+              exciteValueRef={exciteValueRef}
+              onExciteStateChange={setExciteActive}
+              onShockwaveFire={handleShockwaveFire}
+            />
           </div>
         </section>
 
@@ -336,13 +390,12 @@ export default function App() {
             <a
               ref={enterCtaRef}
               href="#enter"
+              data-cursor="enter"
               onPointerMove={handleMagneticMove}
               onPointerLeave={handleMagneticLeave}
               onClick={(e) => {
                 e.preventDefault();
-                setPortalStatus((prev) =>
-                  prev === 'idle' ? 'entering' : 'idle',
-                );
+                handleOpenPortal();
               }}
               className="inline-flex items-center justify-center font-mono text-xs tracking-[0.12em] text-[#FFF6EA] px-7 py-3.5 rounded-full whitespace-nowrap transition-[border-color,background-color,transform] duration-200 hover:bg-[#FFF6EA]/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C4BEFF]"
               style={{
@@ -350,9 +403,7 @@ export default function App() {
                 transform: `translate3d(${magneticOffset.x}px, ${magneticOffset.y}px, 0)`,
               }}
             >
-              {portalStatus === 'entering'
-                ? 'Portal armed · Standby'
-                : 'Enter IAL CHEM →'}
+              Enter IAL CHEM →
             </a>
           </div>
 
@@ -363,6 +414,9 @@ export default function App() {
           </footer>
         </section>
       </main>
+
+      {/* Portal Exit Curtain Transition */}
+      <PortalCurtain open={portalOpen} onReplay={handleReplayExperience} />
     </div>
   );
 }
