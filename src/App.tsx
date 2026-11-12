@@ -39,6 +39,13 @@ export default function App() {
     });
     lenisRef.current = lenis;
 
+    let disposed = false;
+    document.fonts?.ready.then(() => {
+      if (!disposed) {
+        lenis.resize();
+      }
+    });
+
     let rafId = 0;
     const raf = (time: number) => {
       lenis.raf(time);
@@ -47,6 +54,7 @@ export default function App() {
     rafId = window.requestAnimationFrame(raf);
 
     return () => {
+      disposed = true;
       window.cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
@@ -103,7 +111,10 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}>
+      <div
+        className="relative min-h-screen w-full overflow-x-clip"
+        style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}
+      >
         <FilmGrainOverlay />
 
         <Navbar
