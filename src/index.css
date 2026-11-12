@@ -1,13 +1,43 @@
 @import "tailwindcss";
+@custom-variant dark (&:where([data-theme="obsidian"], [data-theme="obsidian"] *));
 
 @theme {
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --color-void: #110E17;
-  --color-bone: #FFF6EA;
-  --color-slate-lavender: #9D94B8;
-  --color-spectral: #C4BEFF;
+}
+
+:root,
+[data-theme="obsidian"] {
+  --bg: #0B0A0E;
+  --surface: #131118;
+  --surface-elevated: #1A1722;
+  --ink: #FFF6EA;
+  --ink-muted: #9D94B8;
+  --border: rgba(255, 246, 234, 0.09);
+  --border-strong: rgba(255, 246, 234, 0.18);
+  --accent: #C4B5FD;
+  --accent-ink: #0B0A0E;
+  --accent-warm: #F2C68D;
+  --nav-backdrop: rgba(11, 10, 14, 0.92);
+  --spotlight: rgba(196, 181, 253, 0.08);
+  color-scheme: dark;
+}
+
+[data-theme="cream"] {
+  --bg: #FAF7F2;
+  --surface: #FFFDF9;
+  --surface-elevated: #F3EDE2;
+  --ink: #1E1A26;
+  --ink-muted: #635B73;
+  --border: rgba(30, 26, 38, 0.10);
+  --border-strong: rgba(30, 26, 38, 0.20);
+  --accent: #4F46E5;
+  --accent-ink: #FFFDF9;
+  --accent-warm: #B45309;
+  --nav-backdrop: rgba(250, 247, 242, 0.94);
+  --spotlight: rgba(79, 70, 229, 0.06);
+  color-scheme: light;
 }
 
 @layer base {
@@ -17,17 +47,40 @@
     min-height: 100%;
     margin: 0;
     padding: 0;
-    background-color: #110E17;
-    color: #FFF6EA;
+    background-color: var(--bg);
+    color: var(--ink);
     font-family: var(--font-sans);
     overflow-x: hidden;
     overscroll-behavior-y: none;
+    transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1), color 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   #root {
     width: 100%;
     min-height: 100%;
   }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-ink);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Subtle horizontal scroll container without heavy visible scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Lenis smooth scroll base styling */
@@ -46,11 +99,4 @@ html.lenis body {
 
 .lenis.lenis-stopped {
   overflow: clip;
-}
-
-@media (pointer: fine) {
-  html.has-custom-cursor,
-  html.has-custom-cursor * {
-    cursor: none !important;
-  }
 }

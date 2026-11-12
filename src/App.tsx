@@ -1,422 +1,158 @@
-import {
-  type PointerEvent as ReactPointerEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { CustomCursor } from './components/CustomCursor';
-import { EntryVeil } from './components/EntryVeil';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Lenis from 'lenis';
+import { MotionConfig, useReducedMotion } from 'motion/react';
+import type { IalUnit, SiteTheme } from './data/ialData';
 import { FilmGrainOverlay } from './components/FilmGrainOverlay';
-import { HoldExciteRing } from './components/HoldExciteRing';
-import { PortalCurtain } from './components/PortalCurtain';
-import { ResonanceCanvas } from './components/ResonanceCanvas';
-import { TopBar } from './components/TopBar';
-import { createSmoothScroll, type SmoothScrollController } from './lib/scroll';
-import { computeMagneticOffset } from './lib/scrollCurves';
-import { soundEngine } from './lib/sound';
-
-gsap.registerPlugin(ScrollTrigger);
+import { Navbar } from './components/sections/Navbar';
+import { CommandPaletteModal } from './components/sections/CommandPaletteModal';
+import { HeroSection } from './components/sections/HeroSection';
+import { ShowcaseCarousel } from './components/sections/ShowcaseCarousel';
+import { WorkflowSplit } from './components/sections/WorkflowSplit';
+import { KineticInterlude } from './components/sections/KineticInterlude';
+import { UnitMatrix } from './components/sections/UnitMatrix';
+import { FooterSection } from './components/sections/FooterSection';
 
 export default function App() {
-  const pageRef = useRef<HTMLDivElement | null>(null);
-  const scrollProgressRef = useRef<number>(0);
-  const exciteValueRef = useRef<number>(0);
-  const staticRenderCallbackRef = useRef<(() => void) | null>(null);
-  const scrollControllerRef = useRef<SmoothScrollController | null>(null);
+  const prefersReduced = useReducedMotion();
+  const reducedMotion = Boolean(prefersReduced);
 
-  // Beat refs for GPU-only ScrollTrigger choreography
-  const scrollCueRef = useRef<HTMLDivElement | null>(null);
-  const beat2LineRef = useRef<HTMLHeadingElement | null>(null);
-  const beat3Line1Ref = useRef<HTMLSpanElement | null>(null);
-  const beat3Line2Ref = useRef<HTMLSpanElement | null>(null);
-  const beat4WrapRef = useRef<HTMLDivElement | null>(null);
-  const beat5ContentRef = useRef<HTMLDivElement | null>(null);
-  const enterCtaRef = useRef<HTMLAnchorElement | null>(null);
+  const [theme, setTheme] = useState<SiteTheme>('obsidian');
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
+  const lenisRef = useRef<Lenis | null>(null);
 
-  const [exciteActive, setExciteActive] = useState<boolean>(false);
-  const [shockwaveTrigger, setShockwaveTrigger] = useState<number>(0);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
-  const [portalOpen, setPortalOpen] = useState<boolean>(false);
-  const [magneticOffset, setMagneticOffset] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-
+  // Sync active theme attribute on root <html>
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
-    const controller = createSmoothScroll(prefersReducedMotion);
-    scrollControllerRef.current = controller;
+  // Root Lenis smooth scroll with wheel inertia, paused/disabled for reduced motion
+  useEffect(() => {
+    if (reducedMotion) {
+      lenisRef.current = null;
+      return;
+    }
 
-    const ctx = gsap.context(() => {
-      // Master scroll scrub driving WebGL uMorph (0.0 -> 2.0) & camera tilt
-      ScrollTrigger.create({
-        trigger: pageRef.current,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: true,
-        onUpdate: (self) => {
-          scrollProgressRef.current = self.progress;
-          staticRenderCallbackRef.current?.();
-        },
-      });
+    const lenis = new Lenis({
+      lerp: 0.09,
+      smoothWheel: true,
+    });
+    lenisRef.current = lenis;
 
-      if (prefersReducedMotion) return;
-
-      // Beat 01: Fade out Scroll ↓ cue cleanly as user begins scrolling
-      if (scrollCueRef.current) {
-        gsap.to(scrollCueRef.current, {
-          opacity: 0,
-          y: 10,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '#beat-01',
-            start: 'top top',
-            end: '25% top',
-            scrub: true,
-          },
-        });
-      }
-
-      // Beat 02: Monumental clip-path unmask sweep
-      if (beat2LineRef.current) {
-        gsap.fromTo(
-          beat2LineRef.current,
-          { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0.35 },
-          {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            opacity: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#beat-02',
-              start: 'top 78%',
-              end: 'center 42%',
-              scrub: true,
-            },
-          },
-        );
-      }
-
-      // Beat 03: Opposing horizontal kinetic tracks
-      if (beat3Line1Ref.current && beat3Line2Ref.current) {
-        gsap.fromTo(
-          beat3Line1Ref.current,
-          { xPercent: -10 },
-          {
-            xPercent: 8,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#beat-03',
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: true,
-            },
-          },
-        );
-
-        gsap.fromTo(
-          beat3Line2Ref.current,
-          { xPercent: 10 },
-          {
-            xPercent: -8,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#beat-03',
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: true,
-            },
-          },
-        );
-      }
-
-      // Beat 04: Quiet tension ring subtle entrance scale
-      if (beat4WrapRef.current) {
-        gsap.fromTo(
-          beat4WrapRef.current,
-          { scale: 0.92, opacity: 0.35 },
-          {
-            scale: 1,
-            opacity: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#beat-04',
-              start: 'top 75%',
-              end: 'center center',
-              scrub: true,
-            },
-          },
-        );
-      }
-
-      // Beat 05: Portal reveal rising gently above Cosmic Horizon Wave
-      if (beat5ContentRef.current) {
-        gsap.fromTo(
-          beat5ContentRef.current,
-          { y: 28, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#beat-05',
-              start: 'top 72%',
-              end: 'center 52%',
-              scrub: true,
-            },
-          },
-        );
-      }
-    }, pageRef);
-
-    // Ensure ScrollTrigger recalculates cleanly on resize
-    let refreshRaf = 0;
-    const handleResize = () => {
-      cancelAnimationFrame(refreshRaf);
-      refreshRaf = requestAnimationFrame(() => {
-        ScrollTrigger.refresh();
-      });
+    let rafId = 0;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      rafId = window.requestAnimationFrame(raf);
     };
-    window.addEventListener('resize', handleResize);
-    ScrollTrigger.refresh();
+    rafId = window.requestAnimationFrame(raf);
 
     return () => {
-      cancelAnimationFrame(refreshRaf);
-      window.removeEventListener('resize', handleResize);
-      ctx.revert();
-      controller.destroy();
-      scrollControllerRef.current = null;
-      soundEngine.dispose();
+      window.cancelAnimationFrame(rafId);
+      lenis.destroy();
+      lenisRef.current = null;
     };
-  }, []);
+  }, [reducedMotion]);
 
-  // Lock Lenis scroll when portal curtain is open
+  // Global Cmd+K / Ctrl+K shortcut to toggle Command Palette
   useEffect(() => {
-    const lenis = scrollControllerRef.current?.lenis;
-    if (!lenis) return;
-    if (portalOpen) {
-      lenis.stop();
-    } else {
-      lenis.start();
-    }
-  }, [portalOpen]);
-
-  const handleToggleSound = useCallback(async () => {
-    const next = await soundEngine.toggle();
-    setSoundEnabled(next);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandQuery('');
+        setCommandOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const handleOpenPortal = useCallback(() => {
-    setPortalOpen(true);
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'obsidian' ? 'cream' : 'obsidian'));
   }, []);
 
-  const handleReplayExperience = useCallback(() => {
-    setPortalOpen(false);
-    scrollProgressRef.current = 0;
-    if (scrollControllerRef.current?.lenis) {
-      scrollControllerRef.current.lenis.start();
-      scrollControllerRef.current.lenis.scrollTo(0, { immediate: true });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    }
-    ScrollTrigger.refresh();
-    staticRenderCallbackRef.current?.();
+  const openSearch = useCallback((initialQuery = '') => {
+    setCommandQuery(initialQuery);
+    setCommandOpen(true);
   }, []);
 
-  const handleShockwaveFire = useCallback(() => {
-    setShockwaveTrigger((prev) => prev + 1);
+  const openUnitInspector = useCallback((unitCode: IalUnit['code']) => {
+    setCommandQuery(unitCode);
+    setCommandOpen(true);
   }, []);
 
-  const handleMagneticMove = useCallback(
-    (e: ReactPointerEvent<HTMLAnchorElement>) => {
-      const el = enterCtaRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setMagneticOffset(computeMagneticOffset(e.clientX, e.clientY, rect, 9));
+  const navigateTo = useCallback(
+    (anchor: string) => {
+      if (anchor === '#top') {
+        if (lenisRef.current && !reducedMotion) {
+          lenisRef.current.scrollTo(0);
+        } else {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+        return;
+      }
+      const target = document.querySelector(anchor);
+      if (!(target instanceof HTMLElement)) return;
+      if (lenisRef.current && !reducedMotion) {
+        lenisRef.current.scrollTo(target, { offset: -64 });
+      } else {
+        target.scrollIntoView({ behavior: 'auto' });
+      }
     },
-    [],
+    [reducedMotion],
   );
 
-  const handleMagneticLeave = useCallback(() => {
-    setMagneticOffset({ x: 0, y: 0 });
-  }, []);
-
   return (
-    <div
-      ref={pageRef}
-      data-testid="scroll-stage"
-      className="relative w-full min-h-screen bg-[#110E17] text-[#FFF6EA]"
-    >
-      {/* Desktop hairline crosshair cursor */}
-      <CustomCursor />
+    <MotionConfig reducedMotion="user">
+      <div className="relative min-h-screen w-full" style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}>
+        <FilmGrainOverlay />
 
-      {/* Non-blocking 00 -> 100 Entry Veil */}
-      <EntryVeil />
+        <Navbar
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenSearch={() => openSearch('')}
+          onOpenNotes={() => openSearch('WCH11')}
+          onNavigate={navigateTo}
+        />
 
-      {/* Fixed full-viewport 3D WebGL Resonance Sculpture */}
-      <ResonanceCanvas
-        scrollProgressRef={scrollProgressRef}
-        exciteValueRef={exciteValueRef}
-        staticRenderCallbackRef={staticRenderCallbackRef}
-        exciteActive={exciteActive}
-        shockwaveTrigger={shockwaveTrigger}
-      />
+        <main>
+          <HeroSection
+            theme={theme}
+            reducedMotion={reducedMotion}
+            onStartRevising={() => openSearch('WCH11')}
+            onBuildPack={() => navigateTo('#workflow')}
+          />
 
-      {/* Subtle 0.035 opacity film grain */}
-      <FilmGrainOverlay />
+          <ShowcaseCarousel reducedMotion={reducedMotion} />
 
-      {/* Ultra-Minimal Fixed Top Bar */}
-      <TopBar
-        soundEnabled={soundEnabled}
-        onToggleSound={handleToggleSound}
-        onEnterClick={handleOpenPortal}
-      />
+          <WorkflowSplit
+            reducedMotion={reducedMotion}
+            onOpenSearch={(q = '') => openSearch(q)}
+          />
 
-      {/* 5 Silent Cinematic Scroll Beats (~480vh total) */}
-      <main className="relative z-10 w-full overflow-x-clip">
-        {/* Beat 01 · Arrival (100vh) */}
-        <section
-          id="beat-01"
-          aria-label="Beat 01 Arrival"
-          className="relative w-full h-screen flex flex-col justify-end px-6 sm:px-12 pb-12 sm:pb-16"
-        >
-          <div className="flex items-end justify-between gap-6 w-full max-w-[1440px] mx-auto">
-            <div className="max-w-xl">
-              <p className="font-mono text-[11px] tracking-[0.22em] text-[#9D94B8] mb-3 sm:mb-4">
-                EDEXCEL IAL CHEMISTRY
-              </p>
-              <h1 className="text-[clamp(2.6rem,6vw,5.25rem)] leading-[0.98] tracking-[-0.025em] text-[#FFF6EA] [text-wrap:balance]">
-                <span className="font-sans font-medium">Clarity, </span>
-                <span className="font-serif italic font-normal text-[#FFF6EA]">
-                  distilled.
-                </span>
-              </h1>
-            </div>
+          <KineticInterlude theme={theme} reducedMotion={reducedMotion} />
 
-            <div
-              ref={scrollCueRef}
-              className="font-mono text-[11px] tracking-[0.16em] text-[#9D94B8] pb-2 whitespace-nowrap shrink-0"
-              style={{
-                borderBottom: '1px solid rgba(157, 148, 184, 0.25)',
-              }}
-            >
-              Scroll ↓
-            </div>
-          </div>
-        </section>
+          <UnitMatrix
+            reducedMotion={reducedMotion}
+            onSelectUnit={openUnitInspector}
+          />
+        </main>
 
-        {/* Beat 02 · The Unmasking (100vh) */}
-        <section
-          id="beat-02"
-          aria-label="Beat 02 The Unmasking"
-          className="relative w-full h-screen flex items-center px-6 sm:px-12"
-        >
-          <div className="relative w-full max-w-[1440px] mx-auto h-full flex items-center">
-            <span className="absolute bottom-12 sm:bottom-16 right-0 font-mono tabular-nums text-[11px] tracking-[0.2em] text-[#9D94B8]">
-              02 / 05
-            </span>
+        <FooterSection
+          theme={theme}
+          onLaunchWorkspace={() => openSearch('WCH11')}
+          onOpenSpecIndex={() => openSearch('')}
+          onOpenUnit={openUnitInspector}
+          onNavigate={navigateTo}
+          onToggleTheme={toggleTheme}
+        />
 
-            <h2
-              ref={beat2LineRef}
-              className="text-[clamp(2.1rem,5.2vw,4.5rem)] leading-[1.06] tracking-[-0.02em] font-sans font-medium text-[#FFF6EA] max-w-4xl [text-wrap:balance]"
-            >
-              Every principle in pure order.
-            </h2>
-          </div>
-        </section>
-
-        {/* Beat 03 · Kinetic Scale (100vh) */}
-        <section
-          id="beat-03"
-          aria-label="Beat 03 Kinetic Scale"
-          className="relative w-full h-screen flex flex-col justify-center px-6 sm:px-12 overflow-x-clip"
-        >
-          <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-2 sm:gap-4 select-none">
-            <div className="overflow-hidden">
-              <span
-                ref={beat3Line1Ref}
-                className="block font-sans font-medium text-[clamp(2.8rem,9vw,7.5rem)] leading-[0.95] tracking-[-0.03em] text-[#FFF6EA] whitespace-nowrap"
-              >
-                Strip away
-              </span>
-            </div>
-            <div className="overflow-hidden self-end text-right">
-              <span
-                ref={beat3Line2Ref}
-                className="block font-serif italic font-normal text-[clamp(3rem,9.5vw,8rem)] leading-[0.95] tracking-[-0.015em] text-[#C4BEFF] whitespace-nowrap"
-              >
-                the noise.
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* Beat 04 · Quiet Tension (80vh) */}
-        <section
-          id="beat-04"
-          aria-label="Beat 04 Quiet Tension"
-          className="relative w-full h-[80vh] flex items-center justify-center px-6"
-        >
-          <div ref={beat4WrapRef}>
-            <HoldExciteRing
-              exciteValueRef={exciteValueRef}
-              onExciteStateChange={setExciteActive}
-              onShockwaveFire={handleShockwaveFire}
-            />
-          </div>
-        </section>
-
-        {/* Beat 05 · The Portal (100vh) */}
-        <section
-          id="beat-05"
-          aria-label="Beat 05 The Portal"
-          className="relative w-full h-screen flex flex-col justify-between items-center px-6 sm:px-12 pt-28 sm:pt-36 pb-8"
-        >
-          <div
-            id="enter"
-            ref={beat5ContentRef}
-            className="flex flex-col items-center text-center mt-4 sm:mt-8"
-          >
-            <h2 className="text-[clamp(2.4rem,5.5vw,4.75rem)] leading-[1.04] tracking-[-0.02em] text-[#FFF6EA] mb-8 sm:mb-10 [text-wrap:balance]">
-              <span className="font-sans font-medium">Begin when </span>
-              <span className="font-serif italic font-normal">ready.</span>
-            </h2>
-
-            <a
-              ref={enterCtaRef}
-              href="#enter"
-              data-cursor="enter"
-              onPointerMove={handleMagneticMove}
-              onPointerLeave={handleMagneticLeave}
-              onClick={(e) => {
-                e.preventDefault();
-                handleOpenPortal();
-              }}
-              className="inline-flex items-center justify-center font-mono text-xs tracking-[0.12em] text-[#FFF6EA] px-7 py-3.5 rounded-full whitespace-nowrap transition-[border-color,background-color,transform] duration-200 hover:bg-[#FFF6EA]/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C4BEFF]"
-              style={{
-                border: '1px solid rgba(255, 246, 234, 0.24)',
-                transform: `translate3d(${magneticOffset.x}px, ${magneticOffset.y}px, 0)`,
-              }}
-            >
-              Enter IAL CHEM →
-            </a>
-          </div>
-
-          <footer className="w-full text-center">
-            <p className="font-mono text-[11px] tracking-[0.16em] text-[#FFF6EA]/45">
-              WCH11 — WCH16 · 2018 SPECIFICATION · INDEPENDENT REVISION RESOURCE
-            </p>
-          </footer>
-        </section>
-      </main>
-
-      {/* Portal Exit Curtain Transition */}
-      <PortalCurtain open={portalOpen} onReplay={handleReplayExperience} />
-    </div>
+        <CommandPaletteModal
+          open={commandOpen}
+          initialQuery={commandQuery}
+          onClose={() => setCommandOpen(false)}
+          onJumpToAnchor={navigateTo}
+        />
+      </div>
+    </MotionConfig>
   );
 }
