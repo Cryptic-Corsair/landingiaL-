@@ -20,7 +20,7 @@ export default defineConfig(() => {
           manualChunks(id: string) {
             if (id.includes('node_modules/three')) return 'three';
             if (
-              id.includes('node_modules/motion') ||
+              id.includes('node_modules/gsap') ||
               id.includes('node_modules/lenis')
             ) {
               return 'motion';
