@@ -1,225 +1,148 @@
-import {
-  BASE_FILTER_HZ,
-  computeDroneFilterCutoff,
-  computeDroneGain,
-} from './soundParams';
-
-interface DroneNodes {
-  oscA: OscillatorNode;
-  oscB: OscillatorNode;
-  oscSub: OscillatorNode;
-  filter: BiquadFilterNode;
-  masterGain: GainNode;
-}
-
 /**
- * Pure Web Audio API ambient resonance synthesizer (muted by default).
- * Produces an ultra-soft warm sub-harmonic drone (gain <= 0.04) and a
- * crystalline release chime without external audio assets.
+ * Pure Web Audio API tactile synth helper (zero external files, muted by default).
  */
-class AmbientSoundEngine {
+class StudioSoundEngine {
   private ctx: AudioContext | null = null;
-  private drone: DroneNodes | null = null;
   private enabled = false;
-  private cleanupTimer: number | null = null;
 
-  public isEnabled(): boolean {
-    return this.enabled;
-  }
-
-  public async toggle(): Promise<boolean> {
-    if (this.enabled) {
-      this.mute();
-      return false;
-    }
-    await this.unmute();
-    return this.enabled;
-  }
-
-  public async unmute(): Promise<void> {
-    if (typeof window === 'undefined') return;
-    if (this.cleanupTimer !== null) {
-      window.clearTimeout(this.cleanupTimer);
-      this.cleanupTimer = null;
-    }
-
-    const AudioCtx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
-    if (!AudioCtx) return;
-
-    if (!this.ctx || this.ctx.state === 'closed') {
+  private ensureContext(): AudioContext | null {
+    if (!this.enabled || typeof window === 'undefined') return null;
+    if (!this.ctx) {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return null;
       this.ctx = new AudioCtx();
     }
     if (this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+      void this.ctx.resume();
     }
+    return this.ctx;
+  }
 
-    if (!this.drone) {
-      this.startDrone(this.ctx);
+  setEnabled(next: boolean): void {
+    this.enabled = next;
+    if (next) {
+      this.ensureContext();
+      this.playChime();
     }
-    this.enabled = true;
   }
 
-  private startDrone(ctx: AudioContext): void {
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  playClick(pitch = 520): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.0001, now);
-    masterGain.gain.linearRampToValueAtTime(computeDroneGain(0), now + 0.85);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.65, now + 0.045);
 
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(BASE_FILTER_HZ, now);
-    filter.Q.setValueAtTime(0.75, now);
+    gain.gain.setValueAtTime(0.055, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
-    // Warm sub-harmonic chord: A1 (55Hz), A2 (110Hz), E3 (164.81Hz)
-    const oscSub = ctx.createOscillator();
-    oscSub.type = 'sine';
-    oscSub.frequency.setValueAtTime(55.0, now);
-
-    const oscA = ctx.createOscillator();
-    oscA.type = 'sine';
-    oscA.frequency.setValueAtTime(110.0, now);
-    oscA.detune.setValueAtTime(-4, now);
-
-    const oscB = ctx.createOscillator();
-    oscB.type = 'triangle';
-    oscB.frequency.setValueAtTime(164.81, now);
-    oscB.detune.setValueAtTime(4, now);
-
-    const subGain = ctx.createGain();
-    subGain.gain.setValueAtTime(0.45, now);
-    const aGain = ctx.createGain();
-    aGain.gain.setValueAtTime(0.35, now);
-    const bGain = ctx.createGain();
-    bGain.gain.setValueAtTime(0.18, now);
-
-    oscSub.connect(subGain);
-    oscA.connect(aGain);
-    oscB.connect(bGain);
-
-    subGain.connect(filter);
-    aGain.connect(filter);
-    bGain.connect(filter);
-
-    filter.connect(masterGain);
-    masterGain.connect(ctx.destination);
-
-    oscSub.start(now);
-    oscA.start(now);
-    oscB.start(now);
-
-    this.drone = { oscA, oscB, oscSub, filter, masterGain };
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.055);
   }
 
-  public setExciteLevel(level: number): void {
-    if (!this.enabled || !this.ctx || !this.drone) return;
-    const now = this.ctx.currentTime;
-    this.drone.filter.frequency.setTargetAtTime(
-      computeDroneFilterCutoff(level),
-      now,
-      0.06,
-    );
-    this.drone.masterGain.gain.setTargetAtTime(
-      computeDroneGain(level),
-      now,
-      0.08,
-    );
-  }
-
-  public playReleaseChime(): void {
-    if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
-    const ctx = this.ctx;
+  playMarimba(freq = 587.33): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const overtone = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-    const partials = [
-      { freq: 659.25, peak: 0.016, decay: 1.5 }, // E5
-      { freq: 987.77, peak: 0.011, decay: 1.7 }, // B5
-      { freq: 1318.51, peak: 0.007, decay: 1.9 }, // E6
-    ];
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
 
-    partials.forEach(({ freq, peak, decay }) => {
+    overtone.type = 'sine';
+    overtone.frequency.setValueAtTime(freq * 2, now);
+
+    const overGain = ctx.createGain();
+    overGain.gain.setValueAtTime(0.018, now);
+    overGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.08);
+
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.28);
+
+    osc.connect(gain);
+    overtone.connect(overGain);
+    overGain.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    overtone.start(now);
+    osc.stop(now + 0.3);
+    overtone.stop(now + 0.3);
+  }
+
+  playPop(freq = 390): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * 0.72, now);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.35, now + 0.06);
+
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  }
+
+  playChime(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((n, idx) => {
+      const now = ctx.currentTime + idx * 0.055;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.setValueAtTime(n, now);
 
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(peak, now + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+      gain.gain.setValueAtTime(0.045, now);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.25);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
-      osc.stop(now + decay + 0.05);
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
+      osc.stop(now + 0.27);
     });
   }
 
-  public mute(): void {
-    this.enabled = false;
-    if (!this.ctx || !this.drone) return;
+  playBurst(): void {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const chord = [523.25, 659.25, 783.99, 1046.5];
+    chord.forEach((n, idx) => {
+      const now = ctx.currentTime + idx * 0.04;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(n, now);
 
-    const ctx = this.ctx;
-    const drone = this.drone;
-    this.drone = null;
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.34);
 
-    const now = ctx.currentTime;
-    drone.masterGain.gain.cancelScheduledValues(now);
-    drone.masterGain.gain.setValueAtTime(drone.masterGain.gain.value, now);
-    drone.masterGain.gain.linearRampToValueAtTime(0.0001, now + 0.22);
-
-    this.cleanupTimer = window.setTimeout(() => {
-      try {
-        drone.oscA.stop();
-        drone.oscB.stop();
-        drone.oscSub.stop();
-        drone.oscA.disconnect();
-        drone.oscB.disconnect();
-        drone.oscSub.disconnect();
-        drone.filter.disconnect();
-        drone.masterGain.disconnect();
-      } catch {
-        // Ignore already-stopped nodes
-      }
-      if (this.ctx && this.ctx.state === 'running') {
-        void this.ctx.suspend();
-      }
-      this.cleanupTimer = null;
-    }, 250);
-  }
-
-  public dispose(): void {
-    this.enabled = false;
-    if (this.cleanupTimer !== null && typeof window !== 'undefined') {
-      window.clearTimeout(this.cleanupTimer);
-      this.cleanupTimer = null;
-    }
-    if (this.drone) {
-      try {
-        this.drone.oscA.stop();
-        this.drone.oscB.stop();
-        this.drone.oscSub.stop();
-        this.drone.oscA.disconnect();
-        this.drone.oscB.disconnect();
-        this.drone.oscSub.disconnect();
-        this.drone.filter.disconnect();
-        this.drone.masterGain.disconnect();
-      } catch {
-        // Ignore already-stopped nodes
-      }
-      this.drone = null;
-    }
-    if (this.ctx && this.ctx.state !== 'closed') {
-      void this.ctx.close();
-    }
-    this.ctx = null;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.36);
+    });
   }
 }
 
-export const soundEngine = new AmbientSoundEngine();
+export const soundEngine = new StudioSoundEngine();

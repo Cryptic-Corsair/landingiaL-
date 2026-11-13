@@ -1,166 +1,119 @@
 import { useEffect, useRef, useState } from 'react';
 
-type CursorVariant = 'default' | 'hold' | 'enter';
+interface CustomCursorProps {
+  reducedMotion: boolean;
+}
 
-/**
- * Custom hairline crosshair cursor for desktop (pointer: fine) devices.
- * Uses lerp-smoothed GPU translate3d coordinates and automatically disables
- * on coarse/touch pointers and under prefers-reduced-motion.
- */
-export function CustomCursor() {
-  const outerRef = useRef<HTMLDivElement | null>(null);
-  const dotRef = useRef<HTMLDivElement | null>(null);
-  const labelRef = useRef<HTMLSpanElement | null>(null);
-  const [enabled, setEnabled] = useState<boolean>(false);
+export function CustomCursor({ reducedMotion }: CustomCursorProps) {
+  const [enabled, setEnabled] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [label, setLabel] = useState<string>('');
+  const cursorRef = useRef<HTMLDivElement | null>(null);
+  const posRef = useRef({ tx: -100, ty: -100, x: -100, y: -100 });
 
   useEffect(() => {
-    const pointerFine = window.matchMedia('(pointer: fine)');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const evaluateEnabled = () => {
-      setEnabled(pointerFine.matches && !reducedMotion.matches);
-    };
-    evaluateEnabled();
-
-    pointerFine.addEventListener('change', evaluateEnabled);
-    reducedMotion.addEventListener('change', evaluateEnabled);
-
-    return () => {
-      pointerFine.removeEventListener('change', evaluateEnabled);
-      reducedMotion.removeEventListener('change', evaluateEnabled);
-    };
-  }, []);
+    if (reducedMotion || typeof window === 'undefined') {
+      setEnabled(false);
+      return;
+    }
+    const fineMq = window.matchMedia('(pointer: fine)');
+    const sync = () => setEnabled(fineMq.matches && !reducedMotion);
+    sync();
+    fineMq.addEventListener('change', sync);
+    return () => fineMq.removeEventListener('change', sync);
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (!enabled) return;
 
-    document.documentElement.classList.add('has-custom-cursor');
+    let rafId = 0;
 
-    let targetX = -100;
-    let targetY = -100;
-    let outerX = -100;
-    let outerY = -100;
-    let dotX = -100;
-    let dotY = -100;
-    let visible = false;
-    let variant: CursorVariant = 'default';
-    let frameId = 0;
-
-    const applyVariantStyles = (next: CursorVariant) => {
-      const outer = outerRef.current;
-      const dot = dotRef.current;
-      const label = labelRef.current;
-      if (!outer || !dot || !label) return;
-
-      if (next === 'default') {
-        outer.style.width = '14px';
-        outer.style.height = '14px';
-        outer.style.borderColor = 'rgba(255, 246, 234, 0.45)';
-        dot.style.opacity = visible ? '1' : '0';
-        label.textContent = '';
-        label.style.opacity = '0';
-      } else {
-        outer.style.width = '28px';
-        outer.style.height = '28px';
-        outer.style.borderColor = 'rgba(196, 190, 255, 0.75)';
-        dot.style.opacity = visible ? '1' : '0';
-        label.textContent = next === 'hold' ? 'HOLD' : 'ENTER';
-        label.style.opacity = '1';
-      }
+    const syncCursorLabel = () => {
+      const p = posRef.current;
+      const el = document.elementFromPoint(p.tx, p.ty);
+      const target = el ? el.closest('[data-cursor]') : null;
+      const nextLabel = target?.getAttribute('data-cursor') ?? '';
+      setLabel((prev) => (prev === nextLabel ? prev : nextLabel));
     };
 
-    const resolveVariant = (target: EventTarget | null): CursorVariant => {
-      if (!(target instanceof Element)) return 'default';
-      const match = target.closest('[data-cursor]');
-      const attr = match?.getAttribute('data-cursor');
-      if (attr === 'hold') return 'hold';
-      if (attr === 'enter') return 'enter';
-      return 'default';
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      posRef.current.tx = e.clientX;
+      posRef.current.ty = e.clientY;
+      setVisible(true);
+
+      const target = e.target instanceof Element ? e.target.closest('[data-cursor]') : null;
+      const nextLabel = target?.getAttribute('data-cursor') ?? '';
+      setLabel((prev) => (prev === nextLabel ? prev : nextLabel));
     };
 
-    const handlePointerMove = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
-      targetX = e.clientX;
-      targetY = e.clientY;
-      if (!visible) {
-        visible = true;
-        outerX = targetX;
-        outerY = targetY;
-        dotX = targetX;
-        dotY = targetY;
-        if (outerRef.current) outerRef.current.style.opacity = '1';
-        if (dotRef.current) dotRef.current.style.opacity = '1';
-      }
-      const nextVariant = resolveVariant(e.target);
-      if (nextVariant !== variant) {
-        variant = nextVariant;
-        applyVariantStyles(variant);
-      }
-    };
-
-    const handlePointerLeave = () => {
-      visible = false;
-      if (outerRef.current) outerRef.current.style.opacity = '0';
-      if (dotRef.current) dotRef.current.style.opacity = '0';
+    const onPointerLeave = () => {
+      setVisible(false);
+      setLabel('');
     };
 
     const tick = () => {
-      outerX += (targetX - outerX) * 0.2;
-      outerY += (targetY - outerY) * 0.2;
-      dotX += (targetX - dotX) * 0.55;
-      dotY += (targetY - dotY) * 0.55;
-
-      if (outerRef.current) {
-        outerRef.current.style.transform = `translate3d(${outerX}px, ${outerY}px, 0) translate3d(-50%, -50%, 0)`;
+      const p = posRef.current;
+      p.x += (p.tx - p.x) * 0.24;
+      p.y += (p.ty - p.y) * 0.24;
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
       }
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate3d(-50%, -50%, 0)`;
-      }
-
-      frameId = requestAnimationFrame(tick);
+      rafId = window.requestAnimationFrame(tick);
     };
 
-    applyVariantStyles('default');
-    window.addEventListener('pointermove', handlePointerMove, { passive: true });
-    document.addEventListener('pointerleave', handlePointerLeave);
-    frameId = requestAnimationFrame(tick);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('scroll', syncCursorLabel, { passive: true });
+    document.addEventListener('pointerleave', onPointerLeave);
+    rafId = window.requestAnimationFrame(tick);
 
     return () => {
-      cancelAnimationFrame(frameId);
-      document.documentElement.classList.remove('has-custom-cursor');
-      window.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerleave', handlePointerLeave);
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('scroll', syncCursorLabel);
+      document.removeEventListener('pointerleave', onPointerLeave);
     };
   }, [enabled]);
 
-  if (!enabled) return null;
+  if (!enabled || !visible) return null;
+
+  const hasLabel = label.length > 0;
 
   return (
     <div
+      ref={cursorRef}
       aria-hidden="true"
-      className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
+      className="pointer-events-none fixed left-0 top-0 z-[90]"
+      style={{ opacity: visible ? 1 : 0 }}
     >
-      <div
-        ref={outerRef}
-        className="fixed top-0 left-0 rounded-full border bg-transparent transition-[width,height,border-color,opacity] duration-200 ease-out"
-        style={{
-          width: '14px',
-          height: '14px',
-          borderColor: 'rgba(255, 246, 234, 0.45)',
-          opacity: 0,
-        }}
-      >
+      {/* Precision Ring + Dot Centered at Exact Pointer Position */}
+      <div className="relative -translate-x-1/2 -translate-y-1/2 flex h-3.5 w-3.5 items-center justify-center">
         <span
-          ref={labelRef}
-          className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] px-2 py-0.5 rounded-full bg-[#110E17]/90 border border-[#C4BEFF]/35 font-mono text-[9px] tracking-[0.18em] text-[#FFF6EA] whitespace-nowrap transition-opacity duration-150"
-          style={{ opacity: 0 }}
+          className="absolute inset-0 rounded-full border transition-transform duration-150"
+          style={{
+            borderColor: 'var(--ink)',
+            transform: hasLabel ? 'scale(1.25)' : 'scale(1)',
+          }}
+        />
+        <span
+          className="h-[3px] w-[3px] rounded-full"
+          style={{ backgroundColor: 'var(--coral)' }}
         />
       </div>
-      <div
-        ref={dotRef}
-        className="fixed top-0 left-0 w-[2px] h-[2px] rounded-full bg-[#FFF6EA]"
-        style={{ opacity: 0 }}
-      />
+
+      {/* Offset Contextual Badge So Button Labels Stay 100% Legible */}
+      {hasLabel && (
+        <div
+          className="absolute left-3.5 top-3.5 flex h-6 items-center justify-center rounded-full border px-2 font-mono text-[9px] font-medium tracking-[0.14em] uppercase shadow-sm whitespace-nowrap"
+          style={{
+            backgroundColor: 'var(--ink)',
+            color: 'var(--bg)',
+            borderColor: 'var(--border-strong)',
+          }}
+        >
+          {label}
+        </div>
+      )}
     </div>
   );
 }

@@ -40,7 +40,8 @@ export function createSmoothScroll(
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     wheelMultiplier: 0.95,
-    touchMultiplier: 1.4,
+    touchMultiplier: 1.5,
+    syncTouch: true,
   });
 
   const onLenisScroll = () => {

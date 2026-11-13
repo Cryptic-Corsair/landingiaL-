@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
@@ -18,9 +18,8 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks(id: string) {
-            if (id.includes('node_modules/three')) return 'three';
             if (
-              id.includes('node_modules/gsap') ||
+              id.includes('node_modules/motion') ||
               id.includes('node_modules/lenis')
             ) {
               return 'motion';
