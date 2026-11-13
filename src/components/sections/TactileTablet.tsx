@@ -13,7 +13,7 @@ interface TactileTabletProps {
   reducedMotion: boolean;
 }
 
-const SWATCH_ORDER: PreviewThemeId[] = ['cream', 'plum', 'dune', 'classic'];
+const SWATCH_ORDER: PreviewThemeId[] = ['cream', 'dark', 'dune', 'classic'];
 
 const SCATTER_OFFSETS = [
   { x: -10, y: -6, rotate: -3.2 },

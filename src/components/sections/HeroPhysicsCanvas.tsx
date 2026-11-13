@@ -201,7 +201,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
     };
 
     const drawFrame = () => {
-      const isPlum = themeRef.current === 'plum';
+      const isObsidian = themeRef.current === 'obsidian';
       ctx.save();
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
@@ -209,7 +209,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
       // Subtle hairline orbital guides centered behind typography
       const cx = width * 0.5;
       const cy = height * 0.48;
-      ctx.strokeStyle = isPlum
+      ctx.strokeStyle = isObsidian
         ? 'rgba(255, 246, 234, 0.065)'
         : 'rgba(30, 26, 38, 0.075)';
       ctx.lineWidth = 1;
@@ -250,7 +250,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
           );
           grad.addColorStop(0, '#FFFDF9');
           grad.addColorStop(0.28, b.color);
-          grad.addColorStop(1, isPlum ? 'rgba(21,18,28,0.65)' : 'rgba(30,26,38,0.22)');
+          grad.addColorStop(1, isObsidian ? 'rgba(21,18,28,0.65)' : 'rgba(30,26,38,0.22)');
 
           ctx.beginPath();
           ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
@@ -258,7 +258,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
           ctx.fill();
 
           ctx.lineWidth = 1;
-          ctx.strokeStyle = isPlum
+          ctx.strokeStyle = isObsidian
             ? 'rgba(255, 246, 234, 0.28)'
             : 'rgba(30, 26, 38, 0.18)';
           ctx.stroke();
@@ -276,7 +276,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
           const y = -b.height / 2;
           drawRoundedRectPath(ctx, x, y, b.width, b.height, b.height / 2);
 
-          ctx.fillStyle = isPlum ? 'rgba(30, 26, 38, 0.92)' : 'rgba(255, 253, 249, 0.94)';
+          ctx.fillStyle = isObsidian ? 'rgba(30, 26, 38, 0.92)' : 'rgba(255, 253, 249, 0.94)';
           ctx.fill();
 
           ctx.lineWidth = 1.25;
@@ -290,7 +290,7 @@ export function HeroPhysicsCanvas({ theme, reducedMotion }: HeroPhysicsCanvasPro
           ctx.fillStyle = b.color;
           ctx.fill();
 
-          ctx.fillStyle = isPlum ? '#FFF6EA' : '#1E1A26';
+          ctx.fillStyle = isObsidian ? '#FFF6EA' : '#1E1A26';
           ctx.font = `500 ${isCompact ? 10 : 12}px "JetBrains Mono", monospace`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';

@@ -1,5 +1,5 @@
-export type SiteTheme = 'cream' | 'plum';
-export type PreviewThemeId = 'cream' | 'plum' | 'dune' | 'classic';
+export type SiteTheme = 'obsidian' | 'cream';
+export type PreviewThemeId = 'dark' | 'cream' | 'dune' | 'classic' | 'plum';
 export type MoodSwatchId = 'classic' | 'cream' | 'dune' | 'midnight';
 
 export interface GlobalMetrics {
@@ -335,6 +335,18 @@ export const PREVIEW_THEMES: Record<PreviewThemeId, PreviewThemeTokens> = {
     inkMuted: '#6A6178',
     border: 'rgba(30, 26, 38, 0.12)',
     accent: '#FF5C35',
+    useSerifHeading: false,
+  },
+  dark: {
+    id: 'dark',
+    label: 'Dark',
+    bg: '#110E17',
+    surface: '#1A1722',
+    surfaceElevated: '#242032',
+    ink: '#FFF6EA',
+    inkMuted: '#9D94B8',
+    border: 'rgba(255, 246, 234, 0.12)',
+    accent: '#C4BEFF',
     useSerifHeading: false,
   },
   plum: {

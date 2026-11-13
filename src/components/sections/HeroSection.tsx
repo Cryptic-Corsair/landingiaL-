@@ -32,9 +32,9 @@ export function HeroSection({
 }: HeroSectionProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const [previewThemeId, setPreviewThemeId] = useState<PreviewThemeId>('dark');
-  const [activeTabId, setActiveTabId] = useState<'definitions' | 'equations' | 'worked'>(
-    'definitions',
-  );
+  const [activeTabId, setActiveTabId] = useState<
+    'definitions' | 'equations' | 'worked' | 'examples'
+  >('definitions');
   const [userInteracted, setUserInteracted] = useState(false);
 
   const { scrollYProgress } = useScroll({
@@ -68,10 +68,11 @@ export function HeroSection({
   // Gentle auto-cycle across preview tabs until the visitor interacts directly
   useEffect(() => {
     if (reducedMotion || userInteracted) return;
-    const ids: Array<'definitions' | 'equations' | 'worked'> = [
+    const ids: Array<'definitions' | 'equations' | 'worked' | 'examples'> = [
       'definitions',
       'equations',
       'worked',
+      'examples',
     ];
     const id = window.setInterval(() => {
       setActiveTabId((prev) => {
@@ -404,9 +405,9 @@ export function HeroSection({
                   </h2>
 
                   <div className="mt-5 space-y-2.5">
-                    {activeTab.lines.map((line) => (
+                    {activeTab.blocks.map((block) => (
                       <div
-                        key={line.key}
+                        key={block.key}
                         className="flex items-center justify-between gap-4 rounded-lg border px-3.5 py-2.5"
                         style={{
                           borderColor: previewTokens.border,
@@ -414,19 +415,19 @@ export function HeroSection({
                         }}
                       >
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold">{line.key}</p>
+                          <p className="text-xs font-semibold">{block.key}</p>
                           <p
                             className="mt-0.5 truncate text-xs"
                             style={{ color: previewTokens.inkMuted }}
                           >
-                            {line.detail}
+                            {block.detail}
                           </p>
                         </div>
                         <span
                           className="font-mono text-[11px] tabular-nums shrink-0"
                           style={{ color: previewTokens.accent }}
                         >
-                          {line.metric}
+                          {block.metric}
                         </span>
                       </div>
                     ))}

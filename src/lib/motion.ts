@@ -17,6 +17,13 @@ export const SPRING_SOFT: Transition = {
   mass: 1,
 };
 
+export const SPRING_PLAYFUL: Transition = {
+  type: 'spring',
+  stiffness: 300,
+  damping: 24,
+  mass: 0.9,
+};
+
 export const VIEWPORT_ONCE = {
   once: true,
   amount: 0.15,
@@ -124,5 +131,32 @@ export function sampleHarmonicWaveY(options: {
   const dx = x - pointerXNorm;
   const ripple = Math.exp(-(dx * dx) * 32) * amplitude * 0.65 * pointerStrength;
   return baseY + primary + harmonic - ripple;
+}
+
+export function computeGoalDialState(minutes: number): {
+  angle: number;
+  label: string;
+  progress: number;
+  ratio: number;
+  atPeak: boolean;
+  clampedMinutes: number;
+  pct: number;
+} {
+  const clampedMinutes = Math.max(0, Math.min(180, minutes));
+  const progress = clampedMinutes / 180;
+  const ratio = progress;
+  const pct = Math.round(progress * 100);
+  const angle = progress * 270 - 135;
+  const hours = (clampedMinutes / 60).toFixed(1);
+  const atPeak = clampedMinutes >= 120;
+  return {
+    angle,
+    label: `${hours} hrs weekly focus`,
+    progress,
+    ratio,
+    atPeak,
+    clampedMinutes,
+    pct,
+  };
 }
 
