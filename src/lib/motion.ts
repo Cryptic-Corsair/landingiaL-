@@ -17,13 +17,6 @@ export const SPRING_SOFT: Transition = {
   mass: 1,
 };
 
-export const SPRING_PLAYFUL: Transition = {
-  type: 'spring',
-  stiffness: 300,
-  damping: 24,
-  mass: 0.9,
-};
-
 export const VIEWPORT_ONCE = {
   once: true,
   amount: 0.15,
@@ -111,52 +104,3 @@ export function filterSearchEntries(entries: readonly SearchEntry[], query: stri
   scored.sort((a, b) => b.score - a.score);
   return scored.map((item) => item.entry);
 }
-
-/**
- * Pure deterministic wave sampler combining two harmonic frequencies plus a smooth
- * Gaussian pointer lift, returning finite pixel Y offsets for fluid footer ribbons.
- */
-export function sampleHarmonicWaveY(options: {
-  xNorm: number;
-  baseY: number;
-  amplitude: number;
-  phase: number;
-  pointerXNorm: number;
-  pointerStrength: number;
-}): number {
-  const { xNorm, baseY, amplitude, phase, pointerXNorm, pointerStrength } = options;
-  const x = Math.max(0, Math.min(1, Number.isFinite(xNorm) ? xNorm : 0));
-  const primary = Math.sin(x * Math.PI * 2.4 + phase) * amplitude;
-  const harmonic = Math.cos(x * Math.PI * 5.2 - phase * 0.65) * (amplitude * 0.36);
-  const dx = x - pointerXNorm;
-  const ripple = Math.exp(-(dx * dx) * 32) * amplitude * 0.65 * pointerStrength;
-  return baseY + primary + harmonic - ripple;
-}
-
-export function computeGoalDialState(minutes: number): {
-  angle: number;
-  label: string;
-  progress: number;
-  ratio: number;
-  atPeak: boolean;
-  clampedMinutes: number;
-  pct: number;
-} {
-  const clampedMinutes = Math.max(0, Math.min(180, minutes));
-  const progress = clampedMinutes / 180;
-  const ratio = progress;
-  const pct = Math.round(progress * 100);
-  const angle = progress * 270 - 135;
-  const hours = (clampedMinutes / 60).toFixed(1);
-  const atPeak = clampedMinutes >= 120;
-  return {
-    angle,
-    label: `${hours} hrs weekly focus`,
-    progress,
-    ratio,
-    atPeak,
-    clampedMinutes,
-    pct,
-  };
-}
-

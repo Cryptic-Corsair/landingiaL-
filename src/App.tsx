@@ -3,6 +3,7 @@ import Lenis from 'lenis';
 import { MotionConfig, useReducedMotion } from 'motion/react';
 import type { IalUnit, SiteTheme } from './data/ialData';
 import { FilmGrainOverlay } from './components/FilmGrainOverlay';
+import { Navbar } from './components/sections/Navbar';
 import { CommandPaletteModal } from './components/sections/CommandPaletteModal';
 import { HeroSection } from './components/sections/HeroSection';
 import { ShowcaseCarousel } from './components/sections/ShowcaseCarousel';
@@ -116,6 +117,14 @@ export default function App() {
       >
         <FilmGrainOverlay />
 
+        <Navbar
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenSearch={() => openSearch('')}
+          onOpenNotes={() => openSearch('WCH11')}
+          onNavigate={navigateTo}
+        />
+
         <main>
           <HeroSection
             theme={theme}
@@ -141,7 +150,6 @@ export default function App() {
 
         <FooterSection
           theme={theme}
-          reducedMotion={reducedMotion}
           onLaunchWorkspace={() => openSearch('WCH11')}
           onOpenSpecIndex={() => openSearch('')}
           onOpenUnit={openUnitInspector}

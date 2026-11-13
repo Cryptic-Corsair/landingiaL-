@@ -6,7 +6,6 @@ import {
   computeHeroStageTransform,
   computeSelectedPackMetrics,
   filterSearchEntries,
-  sampleHarmonicWaveY,
 } from './motion';
 import { SEARCH_ITEMS, SPEC_CHIPS } from '../data/ialData';
 
@@ -50,27 +49,4 @@ test('filterSearchEntries filters units and specification topics accurately', ()
   const wch14Results = filterSearchEntries(SEARCH_ITEMS, 'WCH14');
   assert.ok(wch14Results.length >= 2);
   assert.equal(wch14Results[0].code, 'WCH14');
-});
-
-test('sampleHarmonicWaveY stays finite and lifts smoothly under pointer influence', () => {
-  const neutral = sampleHarmonicWaveY({
-    xNorm: 0.5,
-    baseY: 80,
-    amplitude: 20,
-    phase: 0,
-    pointerXNorm: 0.5,
-    pointerStrength: 0,
-  });
-  const lifted = sampleHarmonicWaveY({
-    xNorm: 0.5,
-    baseY: 80,
-    amplitude: 20,
-    phase: 0,
-    pointerXNorm: 0.5,
-    pointerStrength: 1,
-  });
-
-  assert.equal(Number.isFinite(neutral), true);
-  assert.equal(Number.isFinite(lifted), true);
-  assert.ok(lifted < neutral, 'pointer proximity lifts the wave crest upward');
 });
