@@ -1,5 +1,6 @@
-export type SiteTheme = 'obsidian' | 'cream';
-export type PreviewThemeId = 'dark' | 'cream' | 'dune' | 'classic';
+export type SiteTheme = 'cream' | 'plum';
+export type PreviewThemeId = 'cream' | 'plum' | 'dune' | 'classic';
+export type MoodSwatchId = 'classic' | 'cream' | 'dune' | 'midnight';
 
 export interface GlobalMetrics {
   units: number;
@@ -16,6 +17,7 @@ export interface IalUnit {
   title: string;
   topicsCount: number;
   minutes: number;
+  accentHex: string;
   scope: string;
   sampleTopics: string[];
 }
@@ -27,6 +29,7 @@ export interface SpecChip {
   unitCode: IalUnit['code'];
   minutes: number;
   pages: number;
+  accentHex: string;
 }
 
 export interface SearchEntry {
@@ -56,22 +59,33 @@ export interface PreviewThemeTokens {
 }
 
 export interface HeroTabData {
-  id: 'definitions' | 'equations' | 'worked';
-  indexLabel: string;
+  id: 'definitions' | 'equations' | 'examples';
   label: string;
   commandQuery: string;
   unitLabel: string;
   title: string;
   meta: string;
-  lines: Array<{ key: string; detail: string; metric: string }>;
+  blocks: Array<{ key: string; detail: string; metric: string }>;
 }
 
-export interface WorkflowChapter {
-  id: 'pinpoint' | 'assemble' | 'retain';
-  index: string;
+export interface MoodSwatch {
+  id: MoodSwatchId;
+  name: string;
+  tag: string;
+  bg: string;
+  surface: string;
+  ink: string;
+  inkMuted: string;
+  border: string;
+  accent: string;
+  useSerifHeading: boolean;
+}
+
+export interface SandboxPillDef {
+  id: string;
   label: string;
-  summary: string;
-  detail: string;
+  color: string;
+  textColor: string;
 }
 
 export const GLOBAL_METRICS: GlobalMetrics = {
@@ -90,6 +104,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Structure, Bonding and Introduction to Organic Chemistry',
     topicsCount: 5,
     minutes: 120,
+    accentHex: '#FF5C35',
     scope: 'Topics 1–5: Formulae, atomic structure, bonding, periodicity, and alkanes/alkenes.',
     sampleTopics: [
       'Topic 1 · Formulae, equations and amounts',
@@ -106,6 +121,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Energetics, Group Chemistry, Halogenoalkanes and Alcohols',
     topicsCount: 5,
     minutes: 130,
+    accentHex: '#8B5CF6',
     scope: 'Topics 6–10: Enthalpy, kinetics, equilibria, Group 1/2/7, and organic mechanisms.',
     sampleTopics: [
       'Topic 6 · Energetics and Hess cycles',
@@ -122,6 +138,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Practical Skills in Chemistry I',
     topicsCount: 9,
     minutes: 182,
+    accentHex: '#14B8A6',
     scope: 'Qualitative ion and gas tests, core practicals, apparatus rigs, and uncertainty.',
     sampleTopics: [
       'Qualitative anion and cation analysis',
@@ -137,6 +154,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Rates, Equilibria and Further Organic Chemistry',
     topicsCount: 6,
     minutes: 142,
+    accentHex: '#F59E0B',
     scope: 'Topics 11–16: Rate equations, entropy, acid–base equilibria, carbonyls, and chirality.',
     sampleTopics: [
       'Topic 11 · Kinetics and rate equations',
@@ -153,6 +171,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Transition Metals and Organic Nitrogen Chemistry',
     topicsCount: 5,
     minutes: 122,
+    accentHex: '#EC4899',
     scope: 'Topics 17–21: Electrode potentials, transition complexes, arenes, and nitrogen synthesis.',
     sampleTopics: [
       'Topic 17 · Redox equilibria and electrode potentials',
@@ -169,6 +188,7 @@ export const IAL_UNITS: readonly IalUnit[] = [
     title: 'Practical Skills in Chemistry II',
     topicsCount: 3,
     minutes: 60,
+    accentHex: '#3B82F6',
     scope: 'A2 kinetics experiments, organic synthesis techniques, and practical exam method.',
     sampleTopics: [
       'Continuous and initial-rate kinetics rigs',
@@ -182,34 +202,38 @@ export const SPEC_CHIPS: readonly SpecChip[] = [
   {
     id: 'spec-1.4c',
     code: '1.4c',
-    label: '1.4c · Ionisation energy trends',
+    label: 'Ionisation energy trends',
     unitCode: 'WCH11',
-    minutes: 14,
-    pages: 4,
+    minutes: 8,
+    pages: 3,
+    accentHex: '#FF5C35',
   },
   {
     id: 'spec-2.7a',
     code: '2.7a',
-    label: '2.7a · Hess cycle calculations',
+    label: 'Hess cycle templates',
     unitCode: 'WCH12',
-    minutes: 12,
-    pages: 5,
+    minutes: 10,
+    pages: 4,
+    accentHex: '#8B5CF6',
   },
   {
     id: 'spec-4.3b',
     code: '4.3b',
-    label: '4.3b · Buffer calculations',
+    label: 'Buffer pH calculations',
     unitCode: 'WCH14',
-    minutes: 16,
-    pages: 6,
+    minutes: 12,
+    pages: 5,
+    accentHex: '#F59E0B',
   },
   {
     id: 'spec-5.2e',
     code: '5.2e',
-    label: '5.2e · Electrophilic substitution',
+    label: 'Electrophilic substitution',
     unitCode: 'WCH15',
-    minutes: 14,
-    pages: 5,
+    minutes: 8,
+    pages: 4,
+    accentHex: '#EC4899',
   },
 ];
 
@@ -227,18 +251,6 @@ export const SEARCH_ITEMS: readonly SearchEntry[] = [
     keywords: [unit.scope, ...unit.sampleTopics],
   })),
   {
-    id: 'topic-1',
-    kind: 'topic',
-    code: 'Topic 1',
-    title: 'Topic 1 · Amount of substance',
-    unitCode: 'WCH11',
-    unitTitle: 'WCH11 · Unit 1',
-    category: 'IAS Topic',
-    minutes: 24,
-    targetAnchor: '#units',
-    keywords: ['moles', 'titration', 'empirical formula', 'ideal gas'],
-  },
-  {
     id: 'topic-atomic',
     kind: 'topic',
     code: '1.4c',
@@ -249,18 +261,6 @@ export const SEARCH_ITEMS: readonly SearchEntry[] = [
     minutes: 22,
     targetAnchor: '#units',
     keywords: ['orbitals', 'subshells', 'successive ionisation', 'periodicity'],
-  },
-  {
-    id: 'topic-6',
-    kind: 'topic',
-    code: 'Topic 6',
-    title: 'Topic 6 · Energetics',
-    unitCode: 'WCH12',
-    unitTitle: 'WCH12 · Unit 2',
-    category: 'IAS Topic',
-    minutes: 26,
-    targetAnchor: '#units',
-    keywords: ['enthalpy', 'combustion', 'formation', 'bond enthalpy'],
   },
   {
     id: 'topic-hess',
@@ -275,150 +275,102 @@ export const SEARCH_ITEMS: readonly SearchEntry[] = [
     keywords: ['hess cycle', 'calorimetry', 'mean bond enthalpy'],
   },
   {
-    id: 'topic-maxwell',
-    kind: 'topic',
-    code: '2.9b',
-    title: 'Maxwell–Boltzmann & Equilibria',
-    unitCode: 'WCH12',
-    unitTitle: 'WCH12 · Unit 2',
-    category: 'Spec 2.9b',
-    minutes: 24,
-    targetAnchor: '#units',
-    keywords: ['activation energy', 'catalyst', 'le chatelier', 'yield'],
-  },
-  {
-    id: 'topic-practical-1',
+    id: 'topic-flame',
     kind: 'topic',
     code: '3.2a',
-    title: 'Core Practicals & Uncertainty',
+    title: 'Flame Tests & Uncertainty Propagation',
     unitCode: 'WCH13',
     unitTitle: 'WCH13 · Unit 3',
     category: 'IAS Practical',
-    minutes: 28,
+    minutes: 24,
     targetAnchor: '#units',
-    keywords: ['burette', 'pipette', 'percentage error', 'ion test'],
-  },
-  {
-    id: 'topic-titration',
-    kind: 'topic',
-    code: 'CP 02',
-    title: 'Core Practical · Titration & uncertainty',
-    unitCode: 'WCH13',
-    unitTitle: 'WCH13 · Unit 3',
-    category: 'IAS Practical',
-    minutes: 20,
-    targetAnchor: '#units',
-    keywords: ['standard solution', 'concordant titres', 'apparatus uncertainty'],
-  },
-  {
-    id: 'topic-13',
-    kind: 'topic',
-    code: 'Topic 13',
-    title: 'Topic 13 · Acid–base equilibria',
-    unitCode: 'WCH14',
-    unitTitle: 'WCH14 · Unit 4',
-    category: 'IA2 Topic',
-    minutes: 28,
-    targetAnchor: '#units',
-    keywords: ['pH', 'Ka', 'pKa', 'buffer', 'titration curve'],
+    keywords: ['burette', 'pipette', 'percentage error', 'ion test', 'flame'],
   },
   {
     id: 'topic-buffers',
     kind: 'topic',
     code: '4.3b',
-    title: 'Buffer Calculations & Titration Curves',
+    title: 'Buffer pH & Acid–Base Equilibria',
     unitCode: 'WCH14',
     unitTitle: 'WCH14 · Unit 4',
     category: 'Spec 4.3b',
-    minutes: 22,
-    targetAnchor: '#units',
-    keywords: ['henderson', 'weak acid', 'equivalence point', 'indicator'],
-  },
-  {
-    id: 'topic-18',
-    kind: 'topic',
-    code: 'Topic 18',
-    title: 'Topic 18 · Transition metals',
-    unitCode: 'WCH15',
-    unitTitle: 'WCH15 · Unit 5',
-    category: 'IA2 Topic',
     minutes: 26,
     targetAnchor: '#units',
-    keywords: ['d-block', 'ligands', 'coordination', 'redox catalyst'],
+    keywords: ['pH', 'Ka', 'pKa', 'henderson', 'weak acid', 'buffer'],
   },
   {
     id: 'topic-arenes',
     kind: 'topic',
     code: '5.2e',
-    title: 'Transition Metal Complexes & Arenes',
+    title: 'Arenes & Transition Complexes',
     unitCode: 'WCH15',
     unitTitle: 'WCH15 · Unit 5',
     category: 'Spec 5.2e',
     minutes: 24,
     targetAnchor: '#units',
-    keywords: ['benzene', 'nitration', 'friedel-crafts', 'ligand exchange'],
+    keywords: ['benzene', 'nitration', 'ligand exchange', 'electrode potential'],
   },
   {
-    id: 'topic-a2-kinetics',
+    id: 'topic-kinetics-2',
     kind: 'topic',
     code: '6.1c',
-    title: 'A2 Kinetics & Organic Analysis',
+    title: 'A2 Kinetics & Organic Synthesis Method',
     unitCode: 'WCH16',
     unitTitle: 'WCH16 · Unit 6',
     category: 'IA2 Practical',
     minutes: 20,
     targetAnchor: '#units',
-    keywords: ['iodine clock', 'recrystallisation', 'melting point', 'synthesis'],
+    keywords: ['iodine clock', 'recrystallisation', 'distillation', 'reflux'],
   },
 ];
 
 export const PREVIEW_THEMES: Record<PreviewThemeId, PreviewThemeTokens> = {
-  dark: {
-    id: 'dark',
-    label: 'Dark',
-    bg: '#0E0C12',
-    surface: '#16131D',
-    surfaceElevated: '#1F1B29',
-    ink: '#FFF6EA',
-    inkMuted: '#9D94B8',
-    border: 'rgba(255, 246, 234, 0.11)',
-    accent: '#C4B5FD',
-    useSerifHeading: false,
-  },
   cream: {
     id: 'cream',
     label: 'Cream',
-    bg: '#FAF7F2',
+    bg: '#FFF6EA',
     surface: '#FFFDF9',
-    surfaceElevated: '#F3EDE2',
+    surfaceElevated: '#F5EBD9',
     ink: '#1E1A26',
-    inkMuted: '#635B73',
+    inkMuted: '#6A6178',
     border: 'rgba(30, 26, 38, 0.12)',
-    accent: '#4F46E5',
+    accent: '#FF5C35',
+    useSerifHeading: false,
+  },
+  plum: {
+    id: 'plum',
+    label: 'Plum',
+    bg: '#15121C',
+    surface: '#1E1A26',
+    surfaceElevated: '#282334',
+    ink: '#FFF6EA',
+    inkMuted: '#A89EC0',
+    border: 'rgba(255, 246, 234, 0.12)',
+    accent: '#8B5CF6',
     useSerifHeading: false,
   },
   dune: {
     id: 'dune',
     label: 'Dune',
-    bg: '#E8DEC9',
-    surface: '#EFE6D5',
-    surfaceElevated: '#E2D6BE',
+    bg: '#EFE4D1',
+    surface: '#F7EFE0',
+    surfaceElevated: '#E5D6BC',
     ink: '#2A2218',
-    inkMuted: '#6A5D4D',
+    inkMuted: '#6D5E4C',
     border: 'rgba(42, 34, 24, 0.14)',
-    accent: '#C26D3D',
+    accent: '#D97706',
     useSerifHeading: false,
   },
   classic: {
     id: 'classic',
     label: 'Classic',
-    bg: '#F7ECE0',
-    surface: '#FFF6EA',
-    surfaceElevated: '#EFE3D3',
-    ink: '#1E1A26',
-    inkMuted: '#5B5368',
-    border: 'rgba(46, 41, 58, 0.22)',
-    accent: '#2E293A',
+    bg: '#FFFDF8',
+    surface: '#FFFFFF',
+    surfaceElevated: '#F2EFE9',
+    ink: '#18181B',
+    inkMuted: '#60606A',
+    border: 'rgba(24, 24, 27, 0.13)',
+    accent: '#14B8A6',
     useSerifHeading: true,
   },
 };
@@ -426,68 +378,109 @@ export const PREVIEW_THEMES: Record<PreviewThemeId, PreviewThemeTokens> = {
 export const HERO_PREVIEW_TABS: readonly HeroTabData[] = [
   {
     id: 'definitions',
-    indexLabel: '01',
     label: '01 Definitions',
     commandQuery: 'spec:1.4c ionisation',
     unitLabel: 'WCH11 · Topic 2 · Spec 1.4c',
-    title: 'Indexed specification language',
+    title: 'Exact specification phrasing',
     meta: '14 min read · 4 mark-scheme checks',
-    lines: [
-      { key: 'Statement 1.4c', detail: 'First-principles phrasing matched to Pearson mark schemes', metric: '2 marks' },
-      { key: 'Examiner boundary', detail: 'Mandatory state symbols and per-mole conditions highlighted', metric: 'Verified' },
-      { key: 'Quick jump', detail: 'Cross-linked directly to Topic 8 & Topic 12 comparisons', metric: '⌘K' },
+    blocks: [
+      { key: 'Statement 1.4c', detail: 'Verbatim mark-scheme cues highlighted cleanly inline', metric: '2 marks' },
+      { key: 'Boundary rule', detail: 'State symbols and per-mole conditions isolated at a glance', metric: 'Verified' },
+      { key: 'Quick jump', detail: 'Cross-referenced directly with Topic 8 & Topic 12', metric: '⌘K' },
     ],
   },
   {
     id: 'equations',
-    indexLabel: '02',
     label: '02 Equations',
-    commandQuery: 'spec:4.3b equilibria',
+    commandQuery: 'spec:4.3b buffers',
     unitLabel: 'WCH14 · Topic 14 · Spec 4.3b',
-    title: 'Structured calculation templates',
-    meta: '16 min read · 6 worked prompts',
-    lines: [
-      { key: 'Step sequence', detail: 'Balanced molar ratios isolated before substitution', metric: '3 steps' },
-      { key: 'Unit consistency', detail: 'dm³ conversions and significant-figure checkpoints inline', metric: '3 sig fig' },
-      { key: 'Pack export', detail: 'Include directly inside custom single-sheet revision packs', metric: 'Ready' },
+    title: 'Structured calculation flow',
+    meta: '16 min read · 6 worked templates',
+    blocks: [
+      { key: 'Step order', detail: 'Molar ratio check isolated before Ka substitution', metric: '3 steps' },
+      { key: 'Sig-fig guard', detail: 'Volume dm³ conversions flagged inside margin notes', metric: '3 s.f.' },
+      { key: 'Pack export', detail: 'Bundle straight into a one-sheet printable study pack', metric: 'Ready' },
     ],
   },
   {
-    id: 'worked',
-    indexLabel: '03',
-    label: '03 Worked Example',
+    id: 'examples',
+    label: '03 Examples',
     commandQuery: 'spec:5.2e synthesis',
     unitLabel: 'WCH15 · Topic 21 · Spec 5.2e',
-    title: 'Step-by-step mark allocation',
-    meta: '14 min read · Worked sequence 19/30',
-    lines: [
-      { key: 'Mark 1 · Reagent', detail: 'Reagent & condition pair isolated in high-contrast callout', metric: 'M1' },
-      { key: 'Mark 2 · Intermediate', detail: 'Intermediate route checkpoint verified prior to final step', metric: 'M2' },
-      { key: 'Mark 3 · Evaluation', detail: 'Common deduction traps flagged before exam submission', metric: 'M3' },
+    title: 'Guided mark allocation',
+    meta: '14 min read · Example 19 of 30',
+    blocks: [
+      { key: 'Step 01 · Reagent', detail: 'Reagent and condition pair isolated in structured callout', metric: 'M1' },
+      { key: 'Step 02 · Route', detail: 'Intermediate verification checkpoint prior to yield check', metric: 'M2' },
+      { key: 'Step 03 · Trap guard', detail: 'Examiner deduction warning flagged before final answer', metric: 'M3' },
     ],
   },
 ];
 
-export const WORKFLOW_CHAPTERS: readonly WorkflowChapter[] = [
+export const MOOD_SWATCHES: readonly MoodSwatch[] = [
   {
-    id: 'pinpoint',
-    index: '01',
-    label: 'Pinpoint',
-    summary: 'Start from the exact specification index.',
-    detail: 'Filter by unit code, core practical, or statement number without digging through bloated PDFs.',
+    id: 'classic',
+    name: 'Classic Lab',
+    tag: '#FFFDF8',
+    bg: '#FFFDF8',
+    surface: '#FFFFFF',
+    ink: '#18181B',
+    inkMuted: '#5C5C66',
+    border: 'rgba(24, 24, 27, 0.12)',
+    accent: '#14B8A6',
+    useSerifHeading: true,
   },
   {
-    id: 'assemble',
-    index: '02',
-    label: 'Assemble',
-    summary: 'Merge selected notes into one continuous read.',
-    detail: 'Toggle individual specification statements to compile a focused, timed revision pack in seconds.',
+    id: 'cream',
+    name: 'Daylight Cream',
+    tag: '#FFF6EA',
+    bg: '#FFF6EA',
+    surface: '#FFFDF9',
+    ink: '#1E1A26',
+    inkMuted: '#6A6178',
+    border: 'rgba(30, 26, 38, 0.12)',
+    accent: '#FF5C35',
+    useSerifHeading: false,
   },
   {
-    id: 'retain',
-    index: '03',
-    label: 'Retain',
-    summary: 'Track completion and time spent across every unit.',
-    detail: 'Private local progress logs keep topic readiness, worked examples, and weekly pace in view.',
+    id: 'dune',
+    name: 'Warm Dune',
+    tag: '#EFE4D1',
+    bg: '#EFE4D1',
+    surface: '#F7EFE0',
+    ink: '#2A2218',
+    inkMuted: '#6D5E4C',
+    border: 'rgba(42, 34, 24, 0.15)',
+    accent: '#F59E0B',
+    useSerifHeading: false,
   },
+  {
+    id: 'midnight',
+    name: 'Midnight Mood',
+    tag: '#15121C',
+    bg: '#15121C',
+    surface: '#1E1A26',
+    ink: '#FFF6EA',
+    inkMuted: '#A89EC0',
+    border: 'rgba(255, 246, 234, 0.14)',
+    accent: '#8B5CF6',
+    useSerifHeading: false,
+  },
+];
+
+export const SANDBOX_PILLS: readonly SandboxPillDef[] = [
+  { id: 'pill-wch11', label: 'WCH11', color: '#FF5C35', textColor: '#FFFDF9' },
+  { id: 'pill-wch12', label: 'WCH12', color: '#8B5CF6', textColor: '#FFFDF9' },
+  { id: 'pill-wch13', label: 'WCH13', color: '#14B8A6', textColor: '#0E1F1D' },
+  { id: 'pill-wch14', label: 'WCH14', color: '#F59E0B', textColor: '#1E1A26' },
+  { id: 'pill-wch15', label: 'WCH15', color: '#EC4899', textColor: '#FFFDF9' },
+  { id: 'pill-wch16', label: 'WCH16', color: '#3B82F6', textColor: '#FFFDF9' },
+  { id: 'pill-topics', label: '33 Topics', color: '#1E1A26', textColor: '#FFF6EA' },
+  { id: 'pill-examples', label: '30 Examples', color: '#F5EBD9', textColor: '#1E1A26' },
+  { id: 'pill-spec', label: 'Spec 1.4c', color: '#FF5C35', textColor: '#FFFDF9' },
+  { id: 'pill-daily', label: 'Daily Pick', color: '#14B8A6', textColor: '#0E1F1D' },
+  { id: 'pill-cmdk', label: '⌘K Search', color: '#8B5CF6', textColor: '#FFFDF9' },
+  { id: 'pill-pack', label: 'Revision Pack', color: '#1E1A26', textColor: '#FFF6EA' },
+  { id: 'pill-flame', label: 'Flame Tests', color: '#F59E0B', textColor: '#1E1A26' },
+  { id: 'pill-buffer', label: 'Buffer pH', color: '#3B82F6', textColor: '#FFFDF9' },
 ];

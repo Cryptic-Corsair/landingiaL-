@@ -3,31 +3,27 @@ import assert from 'node:assert/strict';
 import {
   GLOBAL_METRICS,
   IAL_UNITS,
+  MOOD_SWATCHES,
   PREVIEW_THEMES,
+  SANDBOX_PILLS,
   SEARCH_ITEMS,
-  SPEC_CHIPS,
 } from './ialData';
 
-test('IAL_UNITS matches verified counts across WCH11-WCH16', () => {
-  assert.equal(IAL_UNITS.length, GLOBAL_METRICS.units);
-  const totalTopics = IAL_UNITS.reduce((acc, u) => acc + u.topicsCount, 0);
-  const totalMinutes = IAL_UNITS.reduce((acc, u) => acc + u.minutes, 0);
-
-  assert.equal(totalTopics, GLOBAL_METRICS.topics);
-  assert.equal(totalMinutes, GLOBAL_METRICS.totalMinutes);
-  assert.equal(GLOBAL_METRICS.workedExamples, 30);
+test('IAL_UNITS defines all 6 Edexcel IAL units with exact topic & minute totals', () => {
+  assert.equal(IAL_UNITS.length, 6);
+  const topicsSum = IAL_UNITS.reduce((acc, u) => acc + u.topicsCount, 0);
+  const minutesSum = IAL_UNITS.reduce((acc, u) => acc + u.minutes, 0);
+  assert.equal(topicsSum, GLOBAL_METRICS.topics);
+  assert.equal(minutesSum, GLOBAL_METRICS.totalMinutes);
+  assert.deepEqual(
+    IAL_UNITS.map((u) => u.code),
+    ['WCH11', 'WCH12', 'WCH13', 'WCH14', 'WCH15', 'WCH16'],
+  );
 });
 
-test('SPEC_CHIPS and SEARCH_ITEMS include all required units and 12 topic entries', () => {
-  assert.equal(SPEC_CHIPS.length, 4);
-  const unitEntries = SEARCH_ITEMS.filter((item) => item.kind === 'unit');
-  const topicEntries = SEARCH_ITEMS.filter((item) => item.kind === 'topic');
-  assert.equal(unitEntries.length, 6);
-  assert.equal(topicEntries.length, 12);
-});
-
-test('PREVIEW_THEMES defines all 4 workspace palettes cleanly', () => {
-  assert.deepEqual(Object.keys(PREVIEW_THEMES), ['dark', 'cream', 'dune', 'classic']);
-  assert.equal(PREVIEW_THEMES.classic.useSerifHeading, true);
-  assert.equal(PREVIEW_THEMES.dune.accent, '#C26D3D');
+test('SANDBOX_PILLS, MOOD_SWATCHES, PREVIEW_THEMES, and SEARCH_ITEMS match spec', () => {
+  assert.equal(SANDBOX_PILLS.length, 14);
+  assert.equal(MOOD_SWATCHES.length, 4);
+  assert.deepEqual(Object.keys(PREVIEW_THEMES), ['cream', 'plum', 'dune', 'classic']);
+  assert.ok(SEARCH_ITEMS.length >= 12);
 });

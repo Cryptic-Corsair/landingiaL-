@@ -104,3 +104,25 @@ export function filterSearchEntries(entries: readonly SearchEntry[], query: stri
   scored.sort((a, b) => b.score - a.score);
   return scored.map((item) => item.entry);
 }
+
+/**
+ * Pure deterministic wave sampler combining two harmonic frequencies plus a smooth
+ * Gaussian pointer lift, returning finite pixel Y offsets for fluid footer ribbons.
+ */
+export function sampleHarmonicWaveY(options: {
+  xNorm: number;
+  baseY: number;
+  amplitude: number;
+  phase: number;
+  pointerXNorm: number;
+  pointerStrength: number;
+}): number {
+  const { xNorm, baseY, amplitude, phase, pointerXNorm, pointerStrength } = options;
+  const x = Math.max(0, Math.min(1, Number.isFinite(xNorm) ? xNorm : 0));
+  const primary = Math.sin(x * Math.PI * 2.4 + phase) * amplitude;
+  const harmonic = Math.cos(x * Math.PI * 5.2 - phase * 0.65) * (amplitude * 0.36);
+  const dx = x - pointerXNorm;
+  const ripple = Math.exp(-(dx * dx) * 32) * amplitude * 0.65 * pointerStrength;
+  return baseY + primary + harmonic - ripple;
+}
+

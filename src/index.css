@@ -1,43 +1,48 @@
 @import "tailwindcss";
-@custom-variant dark (&:where([data-theme="obsidian"], [data-theme="obsidian"] *));
+@custom-variant dark (&:where([data-theme="plum"], [data-theme="plum"] *));
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Fredoka", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: "Instrument Serif", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 :root,
-[data-theme="obsidian"] {
-  --bg: #0B0A0E;
-  --surface: #131118;
-  --surface-elevated: #1A1722;
-  --ink: #FFF6EA;
-  --ink-muted: #9D94B8;
-  --border: rgba(255, 246, 234, 0.09);
-  --border-strong: rgba(255, 246, 234, 0.18);
-  --accent: #C4B5FD;
-  --accent-ink: #0B0A0E;
-  --accent-warm: #F2C68D;
-  --nav-backdrop: rgba(11, 10, 14, 0.92);
-  --spotlight: rgba(196, 181, 253, 0.08);
-  color-scheme: dark;
+[data-theme="cream"] {
+  --bg: #FFF6EA;
+  --surface: #FFFDF9;
+  --surface-2: #F5EBD9;
+  --ink: #1E1A26;
+  --ink-muted: #6A6178;
+  --border: rgba(30, 26, 38, 0.11);
+  --border-strong: rgba(30, 26, 38, 0.22);
+  --dock-bg: rgba(255, 253, 249, 0.90);
+  --coral: #FF5C35;
+  --lavender: #8B5CF6;
+  --teal: #14B8A6;
+  --amber: #F59E0B;
+  --rose: #EC4899;
+  --cobalt: #3B82F6;
+  color-scheme: light;
 }
 
-[data-theme="cream"] {
-  --bg: #FAF7F2;
-  --surface: #FFFDF9;
-  --surface-elevated: #F3EDE2;
-  --ink: #1E1A26;
-  --ink-muted: #635B73;
-  --border: rgba(30, 26, 38, 0.10);
-  --border-strong: rgba(30, 26, 38, 0.20);
-  --accent: #4F46E5;
-  --accent-ink: #FFFDF9;
-  --accent-warm: #B45309;
-  --nav-backdrop: rgba(250, 247, 242, 0.94);
-  --spotlight: rgba(79, 70, 229, 0.06);
-  color-scheme: light;
+[data-theme="plum"] {
+  --bg: #15121C;
+  --surface: #1E1A26;
+  --surface-2: #282334;
+  --ink: #FFF6EA;
+  --ink-muted: #A89EC0;
+  --border: rgba(255, 246, 234, 0.11);
+  --border-strong: rgba(255, 246, 234, 0.22);
+  --dock-bg: rgba(30, 26, 38, 0.92);
+  --coral: #FF5C35;
+  --lavender: #8B5CF6;
+  --teal: #14B8A6;
+  --amber: #F59E0B;
+  --rose: #EC4899;
+  --cobalt: #3B82F6;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -57,9 +62,13 @@
   }
 
   ::selection {
-    background-color: var(--accent);
-    color: var(--accent-ink);
+    background-color: var(--coral);
+    color: #FFFDF9;
   }
+}
+
+.font-display {
+  font-family: var(--font-display);
 }
 
 .tabular-nums {
@@ -70,7 +79,19 @@
   text-wrap: balance;
 }
 
-/* Subtle horizontal scroll container without heavy visible scrollbars */
+/* Custom thin subtle scrollbars inside panels/lists */
+.studio-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.studio-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.studio-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 9999px;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -79,7 +100,31 @@
   scrollbar-width: none;
 }
 
-/* Lenis smooth scroll base styling */
+/* Marquee continuous scroll for VelocityPoster */
+@keyframes marquee-slide {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-ribbon {
+  animation: marquee-slide 24s linear infinite;
+}
+
+.group:hover .animate-marquee-ribbon {
+  animation-duration: 58s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-ribbon {
+    animation: none;
+  }
+}
+
+/* Lenis smooth scroll base styling (never sets overflow-x on html/body) */
 html.lenis,
 html.lenis body {
   height: auto;

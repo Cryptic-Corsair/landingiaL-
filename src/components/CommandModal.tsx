@@ -6,22 +6,23 @@ import {
   SEARCH_ITEMS,
   type IalUnit,
   type SearchEntry,
-} from '../../data/ialData';
-import { EASE_EXPO, filterSearchEntries } from '../../lib/motion';
+} from '../data/ialData';
+import { EASE_EXPO, filterSearchEntries } from '../lib/motion';
+import { soundEngine } from '../lib/sound';
 
-interface CommandPaletteModalProps {
+interface CommandModalProps {
   open: boolean;
   initialQuery?: string;
   onClose: () => void;
   onJumpToAnchor: (anchor: string) => void;
 }
 
-export function CommandPaletteModal({
+export function CommandModal({
   open,
   initialQuery = '',
   onClose,
   onJumpToAnchor,
-}: CommandPaletteModalProps) {
+}: CommandModalProps) {
   const [query, setQuery] = useState(initialQuery);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [activePreview, setActivePreview] = useState<SearchEntry | null>(null);
@@ -69,6 +70,7 @@ export function CommandPaletteModal({
       }
       if (e.key === 'Enter' && filtered[selectedIndex]) {
         e.preventDefault();
+        soundEngine.playClick(620);
         setActivePreview(filtered[selectedIndex]);
       }
     };
@@ -92,7 +94,7 @@ export function CommandPaletteModal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18, ease: EASE_EXPO }}
           className="fixed inset-0 z-[80] flex items-start justify-center px-4 pt-16 sm:pt-24"
-          style={{ backgroundColor: 'rgba(6, 5, 9, 0.72)' }}
+          style={{ backgroundColor: 'rgba(15, 12, 22, 0.65)' }}
           onClick={onClose}
         >
           <motion.div
@@ -108,14 +110,13 @@ export function CommandPaletteModal({
               color: 'var(--ink)',
             }}
           >
-            {/* Search Header */}
             <div
               className="flex items-center gap-3 border-b px-4 py-3.5"
               style={{ borderColor: 'var(--border)' }}
             >
               <Search
                 className="h-4 w-4 shrink-0"
-                style={{ color: 'var(--accent)' }}
+                style={{ color: 'var(--coral)' }}
                 aria-hidden="true"
               />
               <label htmlFor="ial-command-search" className="sr-only">
@@ -130,15 +131,15 @@ export function CommandPaletteModal({
                   setQuery(e.target.value);
                   setActivePreview(null);
                 }}
-                placeholder="Jump to WCH11–WCH16, Hess's Law, Buffers, Practicals..."
-                className="w-full bg-transparent text-sm outline-none placeholder:opacity-50"
+                placeholder="Jump to WCH11–WCH16, Hess's Law, Buffers, Flame Tests..."
+                className="w-full bg-transparent text-sm outline-none placeholder:opacity-55"
                 style={{ color: 'var(--ink)' }}
               />
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close command palette"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md border transition-colors hover:opacity-80 shrink-0"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors hover:opacity-80 shrink-0"
                 style={{
                   borderColor: 'var(--border)',
                   color: 'var(--ink-muted)',
@@ -148,20 +149,19 @@ export function CommandPaletteModal({
               </button>
             </div>
 
-            {/* Active Selection Preview OR Scrollable Filtered List */}
             {activePreview && previewUnit ? (
               <div className="p-5 space-y-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-1.5">
                     <div
                       className="flex items-center gap-2 font-mono text-xs tabular-nums"
-                      style={{ color: 'var(--accent)' }}
+                      style={{ color: previewUnit.accentHex }}
                     >
                       <span>{activePreview.code}</span>
                       <span aria-hidden="true">·</span>
                       <span>{previewUnit.shortLabel}</span>
                     </div>
-                    <h3 className="text-lg font-semibold tracking-tight">
+                    <h3 className="font-display text-xl font-semibold tracking-tight">
                       {activePreview.title}
                     </h3>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--ink-muted)' }}>
@@ -188,7 +188,10 @@ export function CommandPaletteModal({
                     borderColor: 'var(--border)',
                   }}
                 >
-                  <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.12em]" style={{ color: 'var(--ink-muted)' }}>
+                  <div
+                    className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.12em]"
+                    style={{ color: 'var(--ink-muted)' }}
+                  >
                     <span>Specification Coverage</span>
                     <span className="tabular-nums">
                       {previewUnit.topicsCount} topics · {previewUnit.minutes} min
@@ -215,7 +218,7 @@ export function CommandPaletteModal({
                     type="button"
                     onClick={() => {
                       onClose();
-                      onJumpToAnchor('#workflow');
+                      onJumpToAnchor('#sandbox');
                     }}
                     className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium whitespace-nowrap"
                     style={{
@@ -223,7 +226,7 @@ export function CommandPaletteModal({
                       color: 'var(--ink)',
                     }}
                   >
-                    <span>Assemble in Pack Builder</span>
+                    <span>Play in Sandbox</span>
                   </button>
                   <button
                     type="button"
@@ -233,22 +236,22 @@ export function CommandPaletteModal({
                     }}
                     className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap"
                     style={{
-                      backgroundColor: 'var(--ink)',
-                      color: 'var(--bg)',
+                      backgroundColor: 'var(--coral)',
+                      color: '#FFFDF9',
                     }}
                   >
-                    <span>View {previewUnit.code} in Matrix</span>
+                    <span>Open {previewUnit.code} Card</span>
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="max-h-[360px] overflow-y-auto p-2" data-lenis-prevent>
+              <div className="studio-scroll max-h-[340px] overflow-y-auto p-2" data-lenis-prevent>
                 {filtered.length === 0 ? (
                   <div className="py-12 text-center">
                     <p className="text-sm font-medium">No matching units or topics.</p>
                     <p className="mt-1 text-xs" style={{ color: 'var(--ink-muted)' }}>
-                      Try searching WCH11, Hess, Uncertainty, Equilibria, or Arenes.
+                      Try searching WCH11, Hess, Buffers, Arenes, or Flame Tests.
                     </p>
                   </div>
                 ) : (
@@ -262,11 +265,14 @@ export function CommandPaletteModal({
                             role="option"
                             aria-selected={active}
                             onMouseEnter={() => setSelectedIndex(idx)}
-                            onClick={() => setActivePreview(entry)}
+                            onClick={() => {
+                              soundEngine.playClick(620);
+                              setActivePreview(entry);
+                            }}
                             className="flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-2.5 text-left transition-colors"
                             style={{
                               backgroundColor: active
-                                ? 'var(--surface-elevated)'
+                                ? 'var(--surface-2)'
                                 : 'transparent',
                             }}
                           >
@@ -275,7 +281,7 @@ export function CommandPaletteModal({
                                 <span
                                   className="font-mono text-xs font-medium tabular-nums shrink-0"
                                   style={{
-                                    color: active ? 'var(--accent)' : 'var(--ink-muted)',
+                                    color: active ? 'var(--coral)' : 'var(--ink-muted)',
                                   }}
                                 >
                                   {entry.code}
@@ -301,7 +307,7 @@ export function CommandPaletteModal({
                               {active && (
                                 <CornerDownLeft
                                   className="h-3.5 w-3.5"
-                                  style={{ color: 'var(--accent)' }}
+                                  style={{ color: 'var(--coral)' }}
                                   aria-hidden="true"
                                 />
                               )}
@@ -315,7 +321,6 @@ export function CommandPaletteModal({
               </div>
             )}
 
-            {/* Footer Key Hint */}
             <div
               className="flex items-center justify-between border-t px-4 py-2.5 font-mono text-[11px]"
               style={{
@@ -325,7 +330,7 @@ export function CommandPaletteModal({
               }}
             >
               <span>↑↓ Navigate · Enter Inspect</span>
-              <span className="tabular-nums">{filtered.length} indexed entries · Esc</span>
+              <span className="tabular-nums">{filtered.length} entries · Esc</span>
             </div>
           </motion.div>
         </motion.div>

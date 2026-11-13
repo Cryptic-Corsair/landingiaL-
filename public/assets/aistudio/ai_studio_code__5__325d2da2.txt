@@ -1,0 +1,197 @@
+# IAL CHEM — PLAYFUL STUDIO REBUILD (MASTER SPECIFICATION)
+
+You are a Principal Creative Technologist and Motion Designer building a **playful, tactile, joyful, yet unmistakably sophisticated and premium** landing page for **IAL CHEM** (Pearson Edexcel International A Level Chemistry revision notes, units WCH11–WCH16).
+
+Think: **Teenage Engineering × Bike Bear × Zajno (Motion.ed) × Arc Browser**—warm, physical, unexpectedly interactive, and alive with 60fps motion graphics from edge to edge.
+
+---
+
+## 1. HARD RULES & ANTI-SLOP DIRECTIVES
+
+1. **ZERO TOP NAVBAR:** Do NOT render any navigation bar, logo header, or sticky strip along the top edge of the page. The hero must open completely full-bleed from `top: 0`. Put navigation/theme/search controls into a sleek **Floating Bottom Dock** pill (`position: fixed; bottom: 20px`) instead.
+2. **NO CHEMISTRY TEXTBOOK LECTURES:** Do NOT put enthalpy profile graphs, titration curves, molecular ball-and-stick diagrams, or educational chemistry explanations on the landing page. Express the craft purely through tactile physics, optical geometry, typography, and interactive workspace toys.
+3. **SOPHISTICATED PLAYFULNESS (NOT CHILDISH CARTOON SLOP):**
+   - NO emojis anywhere (`🚀`, `✨`, `🔥`, `🧪`).
+   - NO generic rainbow gradients (`from-indigo-500 via-purple-500 to-pink-500`) or muddy `blur-3xl` blobs stacked behind cards.
+   - NO 2D canvas "dots connected by straight lines" networks.
+   - NO `@react-three/fiber`, `@react-three/drei`, or `matter-js` (use pure React + `framer-motion` + custom self-contained HTML5 `<canvas>`/`requestAnimationFrame` physics so there are zero dependency or coordinate-sync crashes).
+   - NO generic SaaS buzzwords ("Supercharge", "Unlock", "Seamless", "Next-gen") or static 3-column icon-box grids.
+   - NO dead UI: every switch, keycap, pill, swatch, slider, dock icon, and Easter egg must genuinely react.
+
+---
+
+## 2. BRAND PALETTE, SURFACE TEXTURE & TYPOGRAPHY
+
+### Arrival Palette (Daylight Warm Cream Default + Full Live Polarity Flip)
+Rooted authentically in IAL CHEM's signature warm cream & plum-ink identity, paired with crisp surgical studio pigments:
+- **Daylight Cream (Default Arrival Look):**
+  - `--bg`: `#FFF6EA` (warm cream paper)
+  - `--surface`: `#FFFDF9`
+  - `--surface-2`: `#F5EBD9`
+  - `--ink`: `#1E1A26` (deep plum-ink)
+  - `--ink-muted`: `#6A6178`
+  - `--border`: `rgba(30, 26, 38, 0.11)`
+  - `--border-strong`: `rgba(30, 26, 38, 0.22)`
+- **Midnight Plum (Live Toggle via Bottom Dock & Theme Lab):**
+  - `--bg`: `#15121C` (deep plum-obsidian)
+  - `--surface`: `#1E1A26`
+  - `--surface-2`: `#282334`
+  - `--ink`: `#FFF6EA`
+  - `--ink-muted`: `#A89EC0`
+  - `--border`: `rgba(255, 246, 234, 0.11)`
+  - `--border-strong`: `rgba(255, 246, 234, 0.22)`
+- **Studio Pigments (Used cleanly like solid tactile inks, never neon blurs):**
+  - Coral Spark: `#FF5C35`
+  - Electric Lavender: `#8B5CF6`
+  - Mint Teal: `#14B8A6`
+  - Sunlit Amber: `#F59E0B`
+
+### Typography (Google Fonts in `index.html`)
+- **Playful Warm Display:** `Fredoka` (weights 500, 600 — friendly rounded authority, tight tracking `-0.025em`)
+- **Sophisticated Editorial Contrast:** `Instrument Serif` (regular + italic — paired inside headlines for sharp typographic contrast)
+- **Clean UI & Body:** `Plus Jakarta Sans` (weights 400, 500, 600)
+- **Technical Codes & Counters:** `JetBrains Mono` (always `font-variant-numeric: tabular-nums`)
+
+### Tactile Craft
+- Subtle fixed micro **film/paper grain overlay** (`opacity: 0.028`, `pointer-events: none`) across the page.
+- Crisp `1px` structural borders, subtle physical bevel highlights, and lively calibrated springs (`SPRING_PLAYFUL = { type: "spring", stiffness: 360, damping: 22 }`, `SPRING_CRISP = { type: "spring", stiffness: 420, damping: 32 }`, `EASE_EXPO = [0.22, 1, 0.36, 1]`).
+- Respect `useReducedMotion()` globally: freeze continuous physics/canvas motion cleanly to poised static frames when active.
+
+---
+
+## 3. GLOBAL SHELL & UTILITIES
+
+### Floating Bottom Dock (`src/components/Dock.tsx`) — Replaces Top Navbar
+- Fixed compact translucent glass pill centered near bottom (`bottom: 20px`, `z-40`) with subtle `1px` border and crisp hover micro-lift:
+  - `IAL CHEM` mini brand mark (scrolls smoothly to top)
+  - Quick Jump pills (`Play`, `Themes`, `Sandbox`, `Units`)
+  - **`⌘K`** Search trigger (opens real animated Command Palette modal; also bound to `Cmd+K` / `Ctrl+K`)
+  - **Theme Toggle** (`Cream / Plum` instant page theme switch)
+  - **Sound Toggle** (`Sound: Off / On` — pure Web Audio API tactile synth chimes/clicks via `src/lib/sound.ts`, muted by default, zero external audio files)
+  - Solid Coral/Plum **`Open Notes →`** CTA
+
+### Custom Context Cursor (`src/components/CustomCursor.tsx` — Desktop `pointer: fine` only)
+- Smooth `lerp`-tracked `12px` ring + `3px` dot that morphs cleanly into contextual labels (`DRAG`, `CLICK`, `PLAY`, `OPEN`, `HOLD`) when hovering interactive playgrounds, swatches, or unit cards.
+
+### Working `⌘K` Command Palette Modal (`src/components/CommandModal.tsx`)
+- Animated `AnimatePresence` overlay filtering all 6 units (`WCH11–WCH16`) and sample topics cleanly with keyboard navigation and `Esc` to close.
+
+---
+
+## 4. COMPLETE 10-SECTION LANDING ARCHITECTURE
+
+Build all 10 interactive sections cleanly using `framer-motion` + `lenis` smooth scroll + self-contained Canvas/SVG physics:
+
+### SECTION 01 · Hero: Zero-Navbar Kinetic Physics Playground (`min-h-[94vh]`)
+- **Full-Bleed Top Edge (`pt-14` breathing room, zero header bar).**
+- **Background Motion Graphic (`HeroPhysicsCanvas.tsx` — High-DPI HTML5 `<canvas>`):**
+  - Buoyant, softly shaded **floating glass/pigment spheres and rounded capsule tokens** (`WCH11`, `33 Topics`, `⌘K`, `30 Examples`, `2018 Spec`) drifting smoothly in wide margins around the hero center over subtle hairline orbital tracks.
+  - Real-time **cursor repulsion + elastic wall/sphere collision + subtle squash-and-stretch** on bounce (`deltaTime <= 0.05` normalized, `dpr <= 2`).
+- **Foreground Composition:**
+  - Small tilted physical sticker pill: `EDEXCEL IAL · WCH11–WCH16`
+  - Expressive monumental headline mixing `Fredoka` + italic `Instrument Serif`: *"Revision notes, made **delightfully** clear."*
+  - Clean 1-line subtitle: *"Six units, thirty-three topics, and custom revision packs—crafted to feel effortless."*
+  - Two tactile CTAs: primary solid squishy pill **`Open the Bench →`** (hover bounce + optional soft click chime) and secondary hairline **`Play Below ↓`**.
+
+### SECTION 02 · Interactive Hero Stage: "The Tactile Tablet"
+- Scroll-straightening (`useScroll` + `useTransform`: `perspective(1300px) rotateX(8deg) -> 0deg`) chunky beveled workspace tablet floating cleanly below the hero.
+- Features tactile clickable side/top controls:
+  - 4 theme swatch dots (`Cream · Plum · Dune · Classic`) that wash across the tablet preview dynamically.
+  - 3 interactive reader tabs (`01 Definitions`, `02 Equations`, `03 Examples`) animating sleek minimal layout skeletons smoothly.
+  - A playful **`[ Scatter / Tidy ]`** toggle inside the tablet bezel that playfully tilts and offsets internal UI panels (`rotate: -3deg / +4deg`), then snaps them magnetically back into razor-sharp grid alignment!
+
+### SECTION 03 · "Touch & Play" Interactive Motion Grid (Zajno Inspired)
+Section heading: *"Built to feel alive."* — A 3-card interactive toy grid where every panel rewards touching:
+1. **Toy A · Optical Glass Magnifier Lens:** Displays giant bold `IAL CHEM` / `33 TOPICS` typography; moving the mouse across the panel glides a crisp circular optical lens (`clip-path: circle(76px at x y)`) that dynamically shifts the enclosed text into vibrant `#FF5C35` Coral + italic `Instrument Serif` scale magnification!
+2. **Toy B · Tactile 3D Keycap Synth (`⌘`, `K`, `1`, `2`, `3`):** 5 chunky 3D-beveled vector/CSS mechanical keys. Clicking any key (or pressing it on keyboard when hovered) physically depresses the keycap with spring rebound, emits expanding concentric SVG ripple rings, and triggers a soft melodic Web Audio marimba note!
+3. **Toy C · Draggable Goal Dial (`0m → 120m`):** An interactive radial/horizontal tactile slider; dragging it up to `120m` animates concentric calibrated SVG chrono-rings, bends a live smooth sine wave, and bursts celebratory geometric micro-sparks at 100%!
+
+### SECTION 04 · Redesigned Showcase: The Revision Pack Conveyor Machine
+- A wide horizontal dark-plum (`#1E1A26`) contrast showcase frame showing an **animated Spec-to-Pack assembly machine**:
+  - Spec chips (`1.4c`, `2.7a`, `4.3b`, `5.2e`) glide along an animated SVG Bezier track (`pathLength` light pulse), pass beneath a glowing vertical **optical scanner beam**, and stack cleanly into a **"Compiled Pack"** card on the right while a `tabular-nums` timer ticks up (`12m → 38m`) and a crisp rotated **`COMPILED ✓`** stamp slams onto the card with spring overshoot!
+  - Includes an interactive **`[ Run Cycle ]`** / **`[ Toggle Chips ]`** control so visitors can trigger the assembly choreography manually.
+
+### SECTION 05 · Full-Bleed "Mood & Theme Lab" (IAL CHEM `reaction-club-prefs-v1` DNA)
+- Dedicate a rich full-bleed interactive studio section honoring your app's real customization engine:
+  - Four oversized fanned-out **3D Swatch Cards**: **Classic Lab** (`#FFFDF8`), **Daylight Cream** (`#FFF6EA`), **Warm Dune** (`#EFE4D1`), and **Midnight Mood** (`#15121C`).
+  - Clicking any swatch launches a dramatic **expanding liquid-circle color wipe (`clip-path: circle(...)`)** across the entire section!
+  - Live interactive **Type Scale (`S · M · L · XL`)** and **Mode (`Gallery · Editorial`)** `layoutId` pills smoothly resizing and reflowing a clean live sample reader preview inside the section.
+
+### SECTION 06 · "Throw & Sort" 2D Gravity Sandbox (Signature Visual Centerpiece!)
+- A bounded, sleek rounded playground frame (`height: 440px`) containing **14 chunky, pigment-coded rounded pill badges**:
+  `WCH11` · `WCH12` · `WCH13` · `WCH14` · `WCH15` · `WCH16` · `33 Topics` · `30 Examples` · `Spec 1.4c` · `Daily Pick` · `⌘K Search` · `Revision Pack` · `Flame Tests` · `Buffer pH`
+- **Self-Contained Pure `requestAnimationFrame` Physics (NO `matter-js`):**
+  - On entering viewport (`IntersectionObserver`), all 14 pills drop from above with real gravity, bounce elastically off the container walls/floor and subtly push apart from each other, and allow users to **grab, drag, and fling them across the box** with mouse/touch velocity!
+  - Above the tray sit two crisp controls: **`[ Snap to Order ]`** (smoothly levitates and springs every scattered pill into neat aligned rows) and **`[ Drop Chaos ]`** (releases gravity again so they tumble back into the tray!).
+
+### SECTION 07 · Kinetic Velocity Poster Band
+- Full-bleed high-contrast dark plum (`#1E1A26`) interlude (`~65vh`) between the sandbox and unit deck:
+  - Giant opposing display typography tracks scrubbed by `useScroll` + subtle velocity skew (`useVelocity` + `useSpring`):
+    - Track 1: *"Six units. Thirty-three topics."*
+    - Track 2 (italic serif): *"Everything in specification order."*
+  - Framed by floating parallax geometric shapes (orbital rings, clean dots) and a continuous tilted marquee ribbon (`WCH11 ✦ WCH12 ✦ WCH13 ✦ WCH14 ✦ WCH15 ✦ WCH16`) that gently decelerates on hover.
+
+### SECTION 08 · `WCH11–WCH16` Pigment-Coded 3D Collector Deck
+- Clean 2×3 responsive grid (1-col mobile, 2-col tablet, 3-col desktop) for the exact 6 units below.
+- Each card features:
+  - Subtle pigment top-bar/corner accent (`#FF5C35`, `#8B5CF6`, `#14B8A6`, `#F59E0B`, `#EC4899`, `#3B82F6` in muted refined tones).
+  - **Mouse-driven 3D tilt (`perspective(900px) rotateX/rotateY`) + soft radial specular gloss sheen** tracking pointer position.
+  - A **unique procedural animated SVG geometric emblem** (`36x36`, accelerating smoothly on hover—gyro-rings, harmonic sine waves, rising particles, vernier arcs, prism facets, scanlines).
+  - Crisp `tabular-nums` metadata + a tilted hover corner stamp (`OPEN →`).
+- **Exact Unit Data:**
+  - `WCH11 · Unit 1 · IAS`: *Structure, Bonding and Introduction to Organic Chemistry* · `5 topics · 120 min`
+  - `WCH12 · Unit 2 · IAS`: *Energetics, Group Chemistry, Halogenoalkanes and Alcohols* · `5 topics · 130 min`
+  - `WCH13 · Unit 3 · IAS · Practical`: *Practical Skills in Chemistry I* · `9 topics · 182 min`
+  - `WCH14 · Unit 4 · IA2`: *Rates, Equilibria and Further Organic Chemistry* · `6 topics · 142 min`
+  - `WCH15 · Unit 5 · IA2`: *Transition Metals and Organic Nitrogen Chemistry* · `5 topics · 122 min`
+  - `WCH16 · Unit 6 · IA2 · Practical`: *Practical Skills in Chemistry II* · `3 topics · 60 min`
+
+### SECTION 09 · Cheeky Escalating Easter Egg (Bike Bear Inspired)
+- A sleek, minimal centered micro-moment above the footer featuring a tempting tactile coral button: **`Do not press`** (plus quiet mono counter `0 / 4`).
+- Each click escalates cleanly:
+  - Click 1: *"Careful..."* (playful spring wiggle)
+  - Click 2: *"Getting warmer..."* (faster oscillation + pulsing aura)
+  - Click 3: *"Critical mass!"* (subtle card shake + high-pitched synth blip)
+  - Click 4: **Explosive joyful geometric particle & expanding SVG ring burst**, switching cleanly to **`Reaction complete.`** + subtle `Reset` button!
+
+### SECTION 10 · Expressive Closing Stage & Clean 4-Column Footer
+- **Closing Stage:** Oversized warm display type (*"Ready to open your bench?"*) with magnetic solid **`Launch IAL CHEM →`** CTA + `Build a Revision Pack` link.
+- **Footer (`pb-28` so Floating Bottom Dock never overlaps links!):** Clean 4-column grid:
+  1. `IAL CHEM` mark + short summary + `Cream / Plum` toggle
+  2. `Units` (`WCH11`–`WCH16`)
+  3. `Workspace` (`Contents`, `Spec Index`, `Revision Pack`, `Search ⌘K`)
+  4. `Specification` (*"Aligned with the Pearson Edexcel International A Level Chemistry (2018) specification. Independent revision resource, not affiliated with or endorsed by Pearson Education Ltd."*)
+
+---
+
+## 5. MODULAR FILE STRUCTURE
+
+Scaffold cleanly into separated TypeScript modules:
+- `index.html` (Google Fonts: `Fredoka`, `Instrument Serif`, `Plus Jakarta Sans`, `JetBrains Mono`)
+- `src/index.css` (Theme CSS variables for Cream & Plum, grain overlay utility, clean custom scrollbars)
+- `src/lib/motion.ts` (Unified spring/ease presets)
+- `src/lib/sound.ts` (Pure Web Audio API synth helper: soft marimba clicks, chime, pop, muted by default)
+- `src/data/ialData.ts` (Exact units, sample search topics, sandbox pills, theme swatches)
+- `src/components/Dock.tsx` (Floating bottom dock pill)
+- `src/components/CustomCursor.tsx` (Desktop contextual cursor pill)
+- `src/components/CommandModal.tsx` (Live working `⌘K` palette)
+- `src/components/sections/HeroPlayground.tsx` + `HeroPhysicsCanvas.tsx`
+- `src/components/sections/TactileTablet.tsx`
+- `src/components/sections/TouchAndPlay.tsx`
+- `src/components/sections/ConveyorShowcase.tsx`
+- `src/components/sections/ThemeMoodLab.tsx`
+- `src/components/sections/GravitySandbox.tsx`
+- `src/components/sections/VelocityPoster.tsx`
+- `src/components/sections/UnitCollectorDeck.tsx` + `UnitEmblems.tsx`
+- `src/components/sections/EasterEggSection.tsx`
+- `src/components/sections/ClosingFooter.tsx`
+- `src/App.tsx` (Lenis setup + global Theme/Sound/Modal providers + section composition)
+
+---
+
+## 6. FINAL VERIFICATION BEFORE FINISHING
+
+1. Verify **ZERO top navbar** exists anywhere in the DOM.
+2. Verify all interactive playgrounds work on both mouse and touch (`GravitySandbox` drag/throw + Snap to Order, `TouchAndPlay` lens/keycaps/dial, `ThemeMoodLab` expanding liquid wipes, `EasterEggSection` 4-click burst, `⌘K` modal, and `Dock` controls).
+3. Verify `pb-28` bottom padding on the footer so the floating bottom dock never covers footer links.
+4. Verify clean responsiveness at `375px`, `768px`, and `1440px`, full `useReducedMotion()` support, and zero console or TypeScript errors.

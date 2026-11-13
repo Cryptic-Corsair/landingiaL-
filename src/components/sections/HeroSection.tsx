@@ -90,7 +90,7 @@ export function HeroSection({
     <section
       id="top"
       ref={heroRef}
-      className="relative overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-24"
+      className="relative overflow-hidden pt-16 pb-16 sm:pt-24 sm:pb-24"
     >
       {/* Full-bleed GLSL Caustic Refraction & Architectural Grid Background */}
       <HeroShaderCanvas theme={theme} reducedMotion={reducedMotion} />
